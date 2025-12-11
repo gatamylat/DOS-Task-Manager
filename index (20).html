@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TASK.SYS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="./manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <title>TASK.SYS v1.0</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            image-rendering: pixelated;
+            text-transform: uppercase;
+        }
+        
+        :root {
+            --green: #33ff33;
+            --green-dim: #1a991a;
+            --green-dark: #0d4d0d;
+            --amber: #ffaa00;
+            --red: #ff3333;
+            --cyan: #00ffff;
+            --bg: #000000;
+            --bg-light: #0a0a0a;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+        
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: var(--bg);
+            color: var(--green);
+            min-height: 100vh;
+            padding-top: var(--safe-top);
+            font-size: 8px;
+            line-height: 1.6;
+        }
+        
+        /* CRT SCANLINES */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        /* BLINKING CURSOR */
+        .cursor {
+            display: inline-block;
+            background: var(--green);
+            width: 8px;
+            height: 10px;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* BOOT SCREEN */
+        .boot-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .boot-screen.hidden {
+            display: none;
+        }
+        
+        .boot-logo {
+            font-size: 5px;
+            color: var(--green);
+            white-space: pre;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .boot-text {
+            font-size: 7px;
+            color: var(--green);
+            text-align: center;
+            min-height: 60px;
+        }
+        
+        .boot-progress {
+            margin-top: 16px;
+            font-size: 6px;
+            color: var(--green-dim);
+        }
+        
+        /* MARQUEE */
+        .marquee-container {
+            background: var(--green-dark);
+            overflow: hidden;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--green-dim);
+        }
+        
+        .marquee {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 6px;
+            color: var(--green);
+            animation: marquee 20s linear infinite;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        /* HEADER */
+        .header {
+            background: var(--bg);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--green-dim);
+        }
+        
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 6px;
+            color: var(--green-dim);
+        }
+        
+        .header-title {
+            font-size: 8px;
+            color: var(--green);
+            margin-bottom: 4px;
+        }
+        
+        /* XP BAR - DOS STYLE */
+        .xp-section {
+            padding: 8px 12px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--green-dim);
+        }
+        
+        .xp-label {
+            font-size: 6px;
+            color: var(--green-dim);
+            margin-bottom: 4px;
+        }
+        
+        .xp-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 7px;
+        }
+        
+        .xp-bar-ascii {
+            flex: 1;
+            color: var(--green);
+            font-size: 8px;
+            letter-spacing: -1px;
+        }
+        
+        /* CONTENT */
+        .content {
+            padding: 12px;
+            padding-bottom: calc(80px + var(--safe-bottom));
+            min-height: calc(100vh - 200px);
+        }
+        
+        /* DOS BOX FRAME */
+        .dos-box {
+            border: 1px solid var(--green-dim);
+            margin-bottom: 12px;
+        }
+        
+        .dos-box-title {
+            background: var(--green-dim);
+            color: var(--bg);
+            padding: 4px 8px;
+            font-size: 6px;
+        }
+        
+        .dos-box-content {
+            padding: 8px;
+        }
+        
+        /* STATS ROW */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-box {
+            flex: 1;
+            border: 1px solid var(--green-dim);
+            padding: 8px 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 12px;
+            color: var(--green);
+        }
+        
+        .stat-label {
+            font-size: 5px;
+            color: var(--green-dim);
+            margin-top: 4px;
+        }
+        
+        /* TASK LIST */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .task-item {
+            border: 1px solid var(--green-dark);
+            border-top: none;
+            padding: 10px 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: var(--bg);
+        }
+        
+        .task-item:first-child {
+            border-top: 1px solid var(--green-dark);
+        }
+        
+        .task-priority {
+            font-size: 8px;
+            width: 12px;
+        }
+        
+        .task-priority.high { color: var(--red); }
+        .task-priority.medium { color: var(--amber); }
+        .task-priority.low { color: var(--green); }
+        
+        .task-item.completed {
+            opacity: 0.4;
+        }
+        
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+        }
+        
+        .task-checkbox {
+            width: 14px;
+            height: 14px;
+            border: 1px solid var(--green-dim);
+            background: var(--bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: var(--green);
+            flex-shrink: 0;
+        }
+        
+        .task-checkbox:active {
+            background: var(--green-dark);
+        }
+        
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .task-text {
+            font-size: 7px;
+            color: var(--green);
+            word-break: break-word;
+        }
+        
+        .task-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 5px;
+            color: var(--green-dim);
+        }
+        
+        .task-delete {
+            background: transparent;
+            border: none;
+            color: var(--green-dim);
+            font-family: inherit;
+            font-size: 8px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .task-delete:active {
+            color: var(--red);
+        }
+        
+        /* ADD BUTTON */
+        .add-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .add-btn {
+            background: var(--bg);
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: inherit;
+            font-size: 7px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        
+        .add-btn:active {
+            background: var(--green);
+            color: var(--bg);
+        }
+        
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--green-dim);
+        }
+        
+        .empty-ascii {
+            font-size: 5px;
+            white-space: pre;
+            margin-bottom: 12px;
+        }
+        
+        /* SPINNER */
+        .spinner {
+            display: inline-block;
+            width: 10px;
+            text-align: center;
+        }
+        
+        /* STATUS BAR */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--green-dim);
+            color: var(--bg);
+            font-size: 6px;
+            padding: 4px 12px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 101;
+        }
+        
+        /* NAV BAR */
+        .nav-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            background: var(--bg);
+            border-top: 1px solid var(--green-dim);
+            border-bottom: 1px solid var(--green-dim);
+            display: flex;
+            padding-bottom: var(--safe-bottom);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            flex: 1;
+            padding: 10px 4px;
+            text-align: center;
+            color: var(--green-dim);
+            cursor: pointer;
+            font-size: 6px;
+            border-right: 1px solid var(--green-dark);
+        }
+        
+        .nav-item:last-child {
+            border-right: none;
+        }
+        
+        .nav-item.active {
+            color: var(--green);
+            background: var(--green-dark);
+        }
+        
+        .nav-key {
+            font-size: 7px;
+            margin-bottom: 2px;
+        }
+        
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg);
+            border: 2px solid var(--green);
+            width: 100%;
+            max-width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            background: var(--green);
+            color: var(--bg);
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7px;
+        }
+        
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--bg);
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        
+        .modal-body {
+            padding: 12px;
+        }
+        
+        /* FORM */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-label {
+            font-size: 6px;
+            color: var(--green-dim);
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--green-dim);
+            background: var(--bg);
+            color: var(--green);
+            font-family: inherit;
+            font-size: 7px;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+        
+        .select-row {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .select-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: 1px solid var(--green-dark);
+            background: var(--bg);
+            color: var(--green-dim);
+            font-family: inherit;
+            font-size: 6px;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .select-btn.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-dark);
+        }
+        
+        .select-btn[data-priority="high"].active {
+            border-color: var(--red);
+            color: var(--red);
+        }
+        
+        .select-btn[data-priority="medium"].active {
+            border-color: var(--amber);
+            color: var(--amber);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--green);
+            background: var(--bg);
+            color: var(--green);
+            font-family: inherit;
+            font-size: 7px;
+            cursor: pointer;
+        }
+        
+        .btn-submit:active {
+            background: var(--green);
+            color: var(--bg);
+        }
+        
+        /* TOAST */
+        .toast {
+            position: fixed;
+            top: calc(40px + var(--safe-top));
+            left: 12px;
+            right: 12px;
+            background: var(--bg);
+            border: 1px solid var(--green);
+            color: var(--green);
+            padding: 8px 12px;
+            font-size: 6px;
+            z-index: 2000;
+            transform: translateY(-100px);
+            transition: transform 0.2s;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+        }
+        
+        .toast.error {
+            border-color: var(--red);
+            color: var(--red);
+        }
+        
+        /* LEVEL UP */
+        .levelup-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        
+        .levelup-overlay.active {
+            display: flex;
+        }
+        
+        .levelup-ascii {
+            font-size: 5px;
+            color: var(--green);
+            white-space: pre;
+            margin-bottom: 16px;
+            animation: blink 0.3s infinite;
+        }
+        
+        .levelup-number {
+            font-size: 32px;
+            color: var(--green);
+        }
+        
+        .levelup-text {
+            font-size: 7px;
+            color: var(--green-dim);
+            margin-top: 12px;
+        }
+        
+        /* SETTINGS */
+        .settings-item {
+            border: 1px solid var(--green-dark);
+            border-top: none;
+            padding: 12px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 6px;
+        }
+        
+        .settings-item:first-child {
+            border-top: 1px solid var(--green-dark);
+        }
+        
+        .settings-item:active {
+            background: var(--green-dark);
+        }
+        
+        .settings-item .label {
+            color: var(--green);
+        }
+        
+        .settings-item .label.danger {
+            color: var(--red);
+        }
+        
+        .settings-item .arrow {
+            color: var(--green-dim);
+        }
+        
+        /* LOADING DOTS */
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
+    </style>
+</head>
+<body>
+    <!-- BOOT SCREEN -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-logo" id="bootLogo"></div>
+        <div class="boot-text" id="bootText"></div>
+        <div class="boot-progress" id="bootProgress"></div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" style="display: none;">
+        <!-- MARQUEE -->
+        <div class="marquee-container">
+            <div class="marquee" id="marquee">
+                ★ TASK.SYS V1.0 ★ STAY PRODUCTIVE ★ LEVEL UP YOUR LIFE ★ COMPLETE TASKS TO EARN XP ★ WAKE UP NEO... ★ THE MATRIX HAS YOU ★ FOLLOW THE WHITE RABBIT ★
+            </div>
+        </div>
+        
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-title">C:\TASK.SYS><span class="cursor"></span></div>
+            <div class="header-row">
+                <span id="dateDisplay">--/--/----</span>
+                <span><span class="spinner" id="clockSpinner">|</span> <span id="timeDisplay">--:--:--</span></span>
+            </div>
+        </header>
+        
+        <!-- XP BAR -->
+        <div class="xp-section">
+            <div class="xp-label">╔══ EXPERIENCE ══╗</div>
+            <div class="xp-row">
+                <span>LV.<span id="levelNum">01</span></span>
+                <span class="xp-bar-ascii" id="xpBarAscii">[░░░░░░░░░░]</span>
+                <span id="xpText">000/100</span>
+            </div>
+        </div>
+        
+        <!-- CONTENT -->
+        <main class="content" id="mainContent"></main>
+        
+        <!-- NAV BAR -->
+        <nav class="nav-bar">
+            <div class="nav-item active" onclick="App.go('tasks')" data-tab="tasks">
+                <div class="nav-key">[F1]</div>
+                <div>TASKS</div>
+            </div>
+            <div class="nav-item" onclick="App.go('stats')" data-tab="stats">
+                <div class="nav-key">[F2]</div>
+                <div>STATS</div>
+            </div>
+            <div class="nav-item" onclick="App.go('sys')" data-tab="sys">
+                <div class="nav-key">[F3]</div>
+                <div>SYSTEM</div>
+            </div>
+        </nav>
+        
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <span id="statusLeft">READY</span>
+            <span id="statusRight">MEM: 640K OK</span>
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay" onclick="App.closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span id="modalTitle">DIALOG</span>
+                <button class="modal-close" onclick="App.closeModal()">[X]</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- LEVEL UP -->
+    <div class="levelup-overlay" id="levelupOverlay" onclick="App.closeLevelUp()">
+        <div class="levelup-ascii">
+╔═══════════════════════╗
+║   ★ LEVEL UP!! ★     ║
+║                       ║
+║  POWER INCREASED!     ║
+╚═══════════════════════╝
+        </div>
+        <div class="levelup-number" id="levelupNum">02</div>
+        <div class="levelup-text">PRESS ANY KEY TO CONTINUE...</div>
+    </div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// TASK.SYS V1.0 - DOS-STYLE TASK MANAGER
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BOOT_LOGO = `
+████████╗ █████╗ ███████╗██╗  ██╗
+╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
+   ██║   ███████║███████╗█████╔╝ 
+   ██║   ██╔══██║╚════██║██╔═██╗ 
+   ██║   ██║  ██║███████║██║  ██╗
+   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+        ███████╗██╗   ██╗███████╗
+        ██╔════╝╚██╗ ██╔╝██╔════╝
+        ███████╗ ╚████╔╝ ███████╗
+        ╚════██║  ╚██╔╝  ╚════██║
+        ███████║   ██║   ███████║
+        ╚══════╝   ╚═╝   ╚══════╝
+`;
+
+const BOOT_MESSAGES = [
+    'TASK.SYS VERSION 1.0',
+    'COPYRIGHT (C) 2025',
+    '',
+    'INITIALIZING SYSTEM...',
+    'LOADING KERNEL...',
+    'CHECKING MEMORY... 640K OK',
+    'LOADING DATABASE MODULE...',
+    'STARTING XP ENGINE...',
+    'MOUNTING TASK DRIVE...',
+    '',
+    'SYSTEM READY.',
+    '',
+    'PRESS ANY KEY TO CONTINUE...'
+];
+
+class TaskSys {
+    constructor() {
+        this.db = null;
+        this.currentTab = 'tasks';
+        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: null };
+        this.XP_MAX = 100;
+        this.selectedPriority = 'medium';
+        this.selectedXP = 10;
+        this.spinnerFrames = ['|', '/', '-', '\\'];
+        this.spinnerIndex = 0;
+        
+        this.dom = {
+            bootScreen: document.getElementById('bootScreen'),
+            bootLogo: document.getElementById('bootLogo'),
+            bootText: document.getElementById('bootText'),
+            bootProgress: document.getElementById('bootProgress'),
+            mainApp: document.getElementById('mainApp'),
+            content: document.getElementById('mainContent'),
+            levelNum: document.getElementById('levelNum'),
+            xpBarAscii: document.getElementById('xpBarAscii'),
+            xpText: document.getElementById('xpText'),
+            dateDisplay: document.getElementById('dateDisplay'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            clockSpinner: document.getElementById('clockSpinner'),
+            modal: document.getElementById('modalOverlay'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalBody: document.getElementById('modalBody'),
+            toast: document.getElementById('toast'),
+            levelup: document.getElementById('levelupOverlay'),
+            levelupNum: document.getElementById('levelupNum'),
+            statusLeft: document.getElementById('statusLeft'),
+            statusRight: document.getElementById('statusRight')
+        };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // BOOT SEQUENCE
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async boot() {
+        // Show logo with typewriter effect
+        await this.typewriter(this.dom.bootLogo, BOOT_LOGO, 2);
+        
+        // Show boot messages
+        for (let i = 0; i < BOOT_MESSAGES.length; i++) {
+            const msg = BOOT_MESSAGES[i];
+            await this.typewriter(this.dom.bootText, msg + '\n', 30, true);
+            
+            // Update progress bar
+            const progress = Math.floor((i / BOOT_MESSAGES.length) * 100);
+            const filled = Math.floor(progress / 10);
+            const bar = '[' + '█'.repeat(filled) + '░'.repeat(10 - filled) + '] ' + progress + '%';
+            this.dom.bootProgress.textContent = bar;
+            
+            await this.sleep(100);
+        }
+        
+        // Wait for click/key
+        await new Promise(resolve => {
+            const handler = () => {
+                document.removeEventListener('click', handler);
+                document.removeEventListener('keydown', handler);
+                resolve();
+            };
+            document.addEventListener('click', handler);
+            document.addEventListener('keydown', handler);
+        });
+        
+        // Hide boot, show app
+        this.dom.bootScreen.classList.add('hidden');
+        this.dom.mainApp.style.display = 'block';
+        
+        // Start main app
+        await this.init();
+    }
+    
+    async typewriter(element, text, speed = 50, append = false) {
+        const chars = text.split('');
+        for (const char of chars) {
+            if (append) {
+                element.textContent += char;
+            } else {
+                element.textContent = (element.textContent || '') + char;
+            }
+            await this.sleep(speed);
+        }
+    }
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async init() {
+        this.setStatus('INITIALIZING...');
+        
+        await this.initDB();
+        await this.loadUser();
+        this.updateClock();
+        this.startSpinner();
+        this.updateXP();
+        this.checkStreak();
+        this.render();
+        
+        this.setStatus('READY', 'TASKS: ' + (await this.dbAll('tasks')).length);
+    }
+    
+    startSpinner() {
+        setInterval(() => {
+            this.spinnerIndex = (this.spinnerIndex + 1) % this.spinnerFrames.length;
+            this.dom.clockSpinner.textContent = this.spinnerFrames[this.spinnerIndex];
+            this.updateClock();
+        }, 250);
+    }
+    
+    setStatus(left, right) {
+        this.dom.statusLeft.textContent = left || 'READY';
+        if (right !== undefined) this.dom.statusRight.textContent = right;
+    }
+    
+    async initDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('TaskSysDB', 1);
+            req.onerror = () => reject(req.error);
+            req.onsuccess = () => { this.db = req.result; resolve(); };
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('tasks')) {
+                    db.createObjectStore('tasks', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('user')) {
+                    db.createObjectStore('user', { keyPath: 'key' });
+                }
+            };
+        });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // DATABASE
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async dbPut(store, data) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(store, 'readwrite');
+            tx.objectStore(store).put(data);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    
+    async dbGet(store, key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    
+    async dbAll(store) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(store, 'readonly');
+            const req = tx.objectStore(store).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    
+    async dbDel(store, key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(store, 'readwrite');
+            tx.objectStore(store).delete(key);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    
+    async dbClear(store) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(store, 'readwrite');
+            tx.objectStore(store).clear();
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // USER
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async loadUser() {
+        const data = await this.dbGet('user', 'profile');
+        if (data) this.user = data.value;
+        else await this.saveUser();
+    }
+    
+    async saveUser() {
+        await this.dbPut('user', { key: 'profile', value: this.user });
+    }
+    
+    async addXP(amt) {
+        this.user.xp += amt;
+        while (this.user.xp >= this.XP_MAX) {
+            this.user.xp -= this.XP_MAX;
+            this.user.level++;
+            this.showLevelUp(this.user.level);
+        }
+        await this.saveUser();
+        this.updateXP();
+    }
+    
+    updateXP() {
+        const filled = Math.floor((this.user.xp / this.XP_MAX) * 10);
+        const bar = '[' + '█'.repeat(filled) + '░'.repeat(10 - filled) + ']';
+        this.dom.xpBarAscii.textContent = bar;
+        this.dom.xpText.textContent = String(this.user.xp).padStart(3, '0') + '/' + this.XP_MAX;
+        this.dom.levelNum.textContent = String(this.user.level).padStart(2, '0');
+    }
+    
+    updateClock() {
+        const now = new Date();
+        this.dom.dateDisplay.textContent = now.toLocaleDateString('ru-RU');
+        this.dom.timeDisplay.textContent = now.toLocaleTimeString('ru-RU');
+    }
+    
+    checkStreak() {
+        const today = this.today();
+        const last = this.user.lastDate;
+        if (last) {
+            const y = new Date();
+            y.setDate(y.getDate() - 1);
+            const yStr = y.toISOString().split('T')[0];
+            if (last !== today) {
+                this.user.streak = (last === yStr) ? this.user.streak + 1 : 1;
+            }
+        } else {
+            this.user.streak = 1;
+        }
+        this.user.lastDate = today;
+        this.saveUser();
+    }
+    
+    today() {
+        return new Date().toISOString().split('T')[0];
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    go(tab) {
+        this.currentTab = tab;
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.toggle('active', n.dataset.tab === tab);
+        });
+        this.render();
+    }
+    
+    render() {
+        this.setStatus('LOADING<span class="loading-dots"></span>');
+        if (this.currentTab === 'tasks') this.renderTasks();
+        else if (this.currentTab === 'stats') this.renderStats();
+        else if (this.currentTab === 'sys') this.renderSys();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // TASKS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async renderTasks() {
+        const tasks = await this.getTodayTasks();
+        const done = tasks.filter(t => t.done).length;
+        const todo = tasks.filter(t => !t.done).length;
+        
+        this.dom.content.innerHTML = `
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-value">${todo}</div>
+                    <div class="stat-label">TODO</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${done}</div>
+                    <div class="stat-label">DONE</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${this.user.streak}</div>
+                    <div class="stat-label">STREAK</div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ TODAY'S TASKS ══╗</div>
+                <div class="dos-box-content">
+                    <div class="add-row">
+                        <span style="font-size: 6px; color: var(--green-dim);">DIR C:\\TASKS\\*.*</span>
+                        <button class="add-btn" onclick="App.addTask()">[+] NEW</button>
+                    </div>
+                    
+                    ${tasks.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-ascii">
+    ╔═══════════════════╗
+    ║   NO FILES FOUND  ║
+    ║                   ║
+    ║   0 FILE(S)       ║
+    ╚═══════════════════╝
+                            </div>
+                            <div>DIRECTORY IS EMPTY</div>
+                        </div>
+                    ` : `
+                        <div class="task-list">
+                            ${tasks.map(t => this.taskHTML(t)).join('')}
+                        </div>
+                        <div style="margin-top: 8px; font-size: 5px; color: var(--green-dim);">
+                            ${tasks.length} FILE(S) - ${done} COMPLETED
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+        
+        this.setStatus('READY', 'TASKS: ' + tasks.length);
+    }
+    
+    taskHTML(t) {
+        const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
+        return `
+            <div class="task-item ${t.done ? 'completed' : ''}">
+                <div class="task-priority ${t.priority}">${priorityChar}</div>
+                <button class="task-checkbox" onclick="App.toggle('${t.id}')">
+                    ${t.done ? 'X' : ' '}
+                </button>
+                <div class="task-content" onclick="App.editTask('${t.id}')">
+                    <div class="task-text">${this.esc(t.text)}</div>
+                    <div class="task-meta">
+                        <span>+${t.xp}XP</span>
+                        <span>${t.priority}</span>
+                    </div>
+                </div>
+                <button class="task-delete" onclick="App.delTask('${t.id}')">[DEL]</button>
+            </div>
+        `;
+    }
+    
+    async getTodayTasks() {
+        const all = await this.dbAll('tasks');
+        const today = this.today();
+        return all.filter(t => t.date === today).sort((a, b) => {
+            if (a.done !== b.done) return a.done ? 1 : -1;
+            const ord = { high: 0, medium: 1, low: 2 };
+            return ord[a.priority] - ord[b.priority];
+        });
+    }
+    
+    addTask() {
+        this.showModal('NEW TASK', `
+            <div class="form-group">
+                <label class="form-label">DESCRIPTION:</label>
+                <input type="text" class="input" id="taskInput" placeholder="ENTER TASK...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">PRIORITY:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-priority="low" onclick="App.setPriority('low')">LOW</button>
+                    <button class="select-btn active" data-priority="medium" onclick="App.setPriority('medium')">MED</button>
+                    <button class="select-btn" data-priority="high" onclick="App.setPriority('high')">HIGH</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-xp="5" onclick="App.setXP(5)">+5</button>
+                    <button class="select-btn active" data-xp="10" onclick="App.setXP(10)">+10</button>
+                    <button class="select-btn" data-xp="20" onclick="App.setXP(20)">+20</button>
+                    <button class="select-btn" data-xp="50" onclick="App.setXP(50)">+50</button>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="App.saveTask()">[ENTER] SAVE</button>
+        `);
+        
+        this.selectedPriority = 'medium';
+        this.selectedXP = 10;
+        setTimeout(() => document.getElementById('taskInput').focus(), 100);
+    }
+    
+    setPriority(p) {
+        this.selectedPriority = p;
+        document.querySelectorAll('[data-priority]').forEach(b => {
+            b.classList.toggle('active', b.dataset.priority === p);
+        });
+    }
+    
+    setXP(x) {
+        this.selectedXP = x;
+        document.querySelectorAll('[data-xp]').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.xp) === x);
+        });
+    }
+    
+    async saveTask() {
+        const text = document.getElementById('taskInput').value.trim();
+        if (!text) { this.toast('ERROR: EMPTY INPUT', 'error'); return; }
+        
+        const task = {
+            id: 't_' + Date.now(),
+            text: text,
+            priority: this.selectedPriority,
+            xp: this.selectedXP,
+            done: false,
+            date: this.today(),
+            created: new Date().toISOString()
+        };
+        
+        await this.dbPut('tasks', task);
+        this.closeModal();
+        this.toast('TASK CREATED SUCCESSFULLY');
+        this.render();
+    }
+    
+    async toggle(id) {
+        const task = await this.dbGet('tasks', id);
+        if (!task) return;
+        
+        task.done = !task.done;
+        await this.dbPut('tasks', task);
+        
+        if (task.done) {
+            this.user.total++;
+            await this.addXP(task.xp);
+            this.toast('TASK COMPLETE! +' + task.xp + ' XP');
+        }
+        
+        this.render();
+    }
+    
+    async delTask(id) {
+        await this.dbDel('tasks', id);
+        this.toast('TASK DELETED');
+        this.render();
+    }
+    
+    async editTask(id) {
+        const task = await this.dbGet('tasks', id);
+        if (!task) return;
+        
+        this.showModal('EDIT TASK', `
+            <div class="form-group">
+                <label class="form-label">DESCRIPTION:</label>
+                <input type="text" class="input" id="editInput" value="${this.esc(task.text)}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">PRIORITY:</label>
+                <div class="select-row">
+                    <button class="select-btn ${task.priority === 'low' ? 'active' : ''}" data-priority="low" onclick="App.setPriority('low')">LOW</button>
+                    <button class="select-btn ${task.priority === 'medium' ? 'active' : ''}" data-priority="medium" onclick="App.setPriority('medium')">MED</button>
+                    <button class="select-btn ${task.priority === 'high' ? 'active' : ''}" data-priority="high" onclick="App.setPriority('high')">HIGH</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn ${task.xp === 5 ? 'active' : ''}" data-xp="5" onclick="App.setXP(5)">+5</button>
+                    <button class="select-btn ${task.xp === 10 ? 'active' : ''}" data-xp="10" onclick="App.setXP(10)">+10</button>
+                    <button class="select-btn ${task.xp === 20 ? 'active' : ''}" data-xp="20" onclick="App.setXP(20)">+20</button>
+                    <button class="select-btn ${task.xp === 50 ? 'active' : ''}" data-xp="50" onclick="App.setXP(50)">+50</button>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="App.updateTask('${task.id}')">[ENTER] UPDATE</button>
+        `);
+        
+        this.selectedPriority = task.priority;
+        this.selectedXP = task.xp;
+    }
+    
+    async updateTask(id) {
+        const task = await this.dbGet('tasks', id);
+        if (!task) return;
+        
+        task.text = document.getElementById('editInput').value.trim();
+        task.priority = this.selectedPriority;
+        task.xp = this.selectedXP;
+        
+        await this.dbPut('tasks', task);
+        this.closeModal();
+        this.toast('TASK UPDATED');
+        this.render();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STATS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async renderStats() {
+        const all = await this.dbAll('tasks');
+        const done = all.filter(t => t.done);
+        const totalXP = (this.user.level - 1) * this.XP_MAX + this.user.xp;
+        
+        const hi = done.filter(t => t.priority === 'high').length;
+        const med = done.filter(t => t.priority === 'medium').length;
+        const lo = done.filter(t => t.priority === 'low').length;
+        
+        this.dom.content.innerHTML = `
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ PLAYER STATS ══╗</div>
+                <div class="dos-box-content">
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-value">${String(this.user.level).padStart(2, '0')}</div>
+                            <div class="stat-label">LEVEL</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${totalXP}</div>
+                            <div class="stat-label">TOTAL XP</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${this.user.streak}</div>
+                            <div class="stat-label">STREAK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ TASK HISTORY ══╗</div>
+                <div class="dos-box-content">
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-value">${this.user.total}</div>
+                            <div class="stat-label">COMPLETED</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${all.length}</div>
+                            <div class="stat-label">TOTAL</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${all.length ? Math.round((done.length / all.length) * 100) : 0}%</div>
+                            <div class="stat-label">RATE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ BY PRIORITY ══╗</div>
+                <div class="dos-box-content">
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: var(--red);">${hi}</div>
+                            <div class="stat-label">! HIGH</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: var(--amber);">${med}</div>
+                            <div class="stat-label">* MED</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: var(--green);">${lo}</div>
+                            <div class="stat-label">- LOW</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.setStatus('STATS LOADED', 'XP: ' + totalXP);
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    renderSys() {
+        this.dom.content.innerHTML = `
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ SYSTEM CONFIG ══╗</div>
+                <div class="dos-box-content">
+                    <div class="settings-item" onclick="App.exportData()">
+                        <span class="label">[1] EXPORT DATA</span>
+                        <span class="arrow">►</span>
+                    </div>
+                    <div class="settings-item" onclick="App.importData()">
+                        <span class="label">[2] IMPORT DATA</span>
+                        <span class="arrow">►</span>
+                    </div>
+                    <div class="settings-item" onclick="App.resetProgress()">
+                        <span class="label danger">[3] RESET PROGRESS</span>
+                        <span class="arrow">►</span>
+                    </div>
+                    <div class="settings-item" onclick="App.clearAll()">
+                        <span class="label danger">[4] FORMAT C:\\</span>
+                        <span class="arrow">►</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ ABOUT ══╗</div>
+                <div class="dos-box-content" style="font-size: 6px; color: var(--green-dim);">
+                    TASK.SYS VERSION 1.0<br>
+                    COPYRIGHT (C) 2025<br>
+                    <br>
+                    ALL RIGHTS RESERVED.<br>
+                    <br>
+                    "WAKE UP, NEO..."<br>
+                    "THE MATRIX HAS YOU..."
+                </div>
+            </div>
+        `;
+        
+        this.setStatus('SYSTEM', 'VER 1.0');
+    }
+    
+    async exportData() {
+        this.setStatus('EXPORTING<span class="loading-dots"></span>');
+        const tasks = await this.dbAll('tasks');
+        const data = { user: this.user, tasks: tasks, date: new Date().toISOString() };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tasksys_' + this.today() + '.json';
+        a.click();
+        
+        this.toast('DATA EXPORTED TO FILE');
+        this.setStatus('EXPORT COMPLETE');
+    }
+    
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            this.setStatus('IMPORTING<span class="loading-dots"></span>');
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                if (data.user) {
+                    this.user = data.user;
+                    await this.saveUser();
+                }
+                
+                if (data.tasks) {
+                    for (const t of data.tasks) {
+                        await this.dbPut('tasks', t);
+                    }
+                }
+                
+                this.updateXP();
+                this.toast('DATA IMPORTED SUCCESSFULLY');
+                this.render();
+            } catch (err) {
+                this.toast('ERROR: INVALID FILE FORMAT', 'error');
+            }
+            
+            this.setStatus('READY');
+        };
+        input.click();
+    }
+    
+    async resetProgress() {
+        this.showModal('WARNING', `
+            <div style="font-size: 7px; color: var(--amber); margin-bottom: 16px; text-align: center;">
+                ╔═══════════════════════╗<br>
+                ║  ! RESET PROGRESS !   ║<br>
+                ║                       ║<br>
+                ║  ALL XP WILL BE LOST  ║<br>
+                ╚═══════════════════════╝
+            </div>
+            <div class="select-row">
+                <button class="btn-submit" style="border-color: var(--green-dim); color: var(--green-dim);" onclick="App.closeModal()">[N] CANCEL</button>
+                <button class="btn-submit" style="border-color: var(--red); color: var(--red);" onclick="App.confirmReset()">[Y] CONFIRM</button>
+            </div>
+        `);
+    }
+    
+    async confirmReset() {
+        this.setStatus('RESETTING<span class="loading-dots"></span>');
+        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: this.today() };
+        await this.saveUser();
+        this.updateXP();
+        this.closeModal();
+        this.toast('PROGRESS RESET TO ZERO');
+        this.setStatus('READY');
+    }
+    
+    async clearAll() {
+        this.showModal('DANGER', `
+            <div style="font-size: 7px; color: var(--red); margin-bottom: 16px; text-align: center;">
+                ╔═══════════════════════╗<br>
+                ║   !! FORMAT C:\\ !!    ║<br>
+                ║                       ║<br>
+                ║  ALL DATA WILL BE     ║<br>
+                ║  PERMANENTLY DELETED  ║<br>
+                ╚═══════════════════════╝
+            </div>
+            <div class="select-row">
+                <button class="btn-submit" style="border-color: var(--green-dim); color: var(--green-dim);" onclick="App.closeModal()">[N] ABORT</button>
+                <button class="btn-submit" style="border-color: var(--red); color: var(--red);" onclick="App.confirmClearAll()">[Y] FORMAT</button>
+            </div>
+        `);
+    }
+    
+    async confirmClearAll() {
+        this.setStatus('FORMATTING<span class="loading-dots"></span>');
+        await this.dbClear('tasks');
+        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: this.today() };
+        await this.saveUser();
+        this.updateXP();
+        this.closeModal();
+        this.render();
+        this.toast('FORMAT COMPLETE');
+        this.setStatus('READY');
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // UI
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    showModal(title, body) {
+        this.dom.modalTitle.textContent = title;
+        this.dom.modalBody.innerHTML = body;
+        this.dom.modal.classList.add('active');
+    }
+    
+    closeModal(e) {
+        if (e && e.target !== this.dom.modal) return;
+        this.dom.modal.classList.remove('active');
+    }
+    
+    toast(msg, type) {
+        type = type || 'success';
+        this.dom.toast.textContent = msg;
+        this.dom.toast.className = 'toast ' + type + ' show';
+        setTimeout(() => this.dom.toast.classList.remove('show'), 2500);
+    }
+    
+    showLevelUp(lvl) {
+        this.dom.levelupNum.textContent = String(lvl).padStart(2, '0');
+        this.dom.levelup.classList.add('active');
+        setTimeout(() => this.closeLevelUp(), 3000);
+    }
+    
+    closeLevelUp() {
+        this.dom.levelup.classList.remove('active');
+    }
+    
+    esc(txt) {
+        const d = document.createElement('div');
+        d.textContent = txt;
+        return d.innerHTML;
+    }
+}
+
+// START
+const App = new TaskSys();
+document.addEventListener('DOMContentLoaded', () => App.boot());
+window.App = App;
+</script>
+</body>
+</html>
