@@ -1306,8 +1306,23 @@ class TaskSys {
     
     async renderTasks() {
         const tasks = await this.getTodayTasks();
+        const overdue = await this.getOverdueTasks();
         const done = tasks.filter(t => t.done).length;
         const todo = tasks.filter(t => !t.done).length;
+        
+        const overdueHTML = overdue.length > 0 ? `
+            <div class="dos-box" style="border-color: var(--red);">
+                <div class="dos-box-title" style="background: var(--red); color: var(--bg);">╔══ ⚠ OVERDUE ══╗</div>
+                <div class="dos-box-content">
+                    <div class="task-list">
+                        ${overdue.map(t => this.taskHTML(t, true)).join('')}
+                    </div>
+                    <div style="margin-top: 8px; font-size: 5px; color: var(--red);">
+                        ${overdue.length} OVERDUE TASK(S)!
+                    </div>
+                </div>
+            </div>
+        ` : '';
         
         this.dom.content.innerHTML = `
             <div class="stats-row">
@@ -1320,10 +1335,12 @@ class TaskSys {
                     <div class="stat-label">DONE</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">${this.user.streak}</div>
-                    <div class="stat-label">STREAK</div>
+                    <div class="stat-value" style="${overdue.length > 0 ? 'color: var(--red);' : ''}">${overdue.length}</div>
+                    <div class="stat-label">OVERDUE</div>
                 </div>
             </div>
+            
+            ${overdueHTML}
             
             <div class="dos-box">
                 <div class="dos-box-title">╔══ TODAY'S TASKS ══╗</div>
@@ -1356,14 +1373,16 @@ class TaskSys {
             </div>
         `;
         
-        this.setStatus('READY', 'TASKS: ' + tasks.length);
+        this.setStatus('READY', 'TASKS: ' + (tasks.length + overdue.length));
     }
     
-    taskHTML(t) {
+    taskHTML(t, isOverdue) {
         const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
         const bossBtn = !t.done ? `<button class="task-delete" style="color: var(--amber);" onclick="event.stopPropagation(); App.initBoss('${t.id}')">[☠]</button>` : '';
+        const overdueStyle = isOverdue ? 'border-color: var(--red);' : '';
+        const dateLabel = isOverdue ? `<span style="color: var(--red);">${t.date}</span>` : '';
         return `
-            <div class="task-item ${t.done ? 'completed' : ''}">
+            <div class="task-item ${t.done ? 'completed' : ''}" style="${overdueStyle}">
                 <div class="task-priority ${t.priority}">${priorityChar}</div>
                 <button class="task-checkbox" onclick="App.toggle('${t.id}')">
                     ${t.done ? 'X' : ' '}
@@ -1373,6 +1392,7 @@ class TaskSys {
                     <div class="task-meta">
                         <span>+${t.xp}XP</span>
                         <span>${t.priority}</span>
+                        ${dateLabel}
                     </div>
                 </div>
                 ${bossBtn}
@@ -1384,6 +1404,15 @@ class TaskSys {
     async initBoss(id) {
         const task = await this.dbGet('tasks', id);
         if (task) this.showBossModal(task);
+    }
+    
+    async getOverdueTasks() {
+        const all = await this.dbAll('tasks');
+        const today = this.today();
+        return all.filter(t => t.date < today && !t.done).sort((a, b) => {
+            // Oldest first
+            return a.date.localeCompare(b.date);
+        });
     }
     
     async getTodayTasks() {
