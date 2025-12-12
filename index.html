@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="./manifest.json">
     
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     
     <title>TASK.SYS v1.0</title>
     
@@ -65,6 +65,190 @@
             z-index: 9999;
         }
         
+        /* CRT SCREEN CURVATURE */
+        #mainApp {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #mainApp::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(
+                ellipse at center,
+                transparent 0%,
+                transparent 60%,
+                rgba(0, 0, 0, 0.3) 90%,
+                rgba(0, 0, 0, 0.6) 100%
+            );
+            pointer-events: none;
+            z-index: 9998;
+        }
+        
+        /* PHOSPHOR AFTERGLOW */
+        .content, .task-item, .stat-box, .settings-item, .dos-box {
+            transition: text-shadow 0.1s ease-out;
+        }
+        
+        .task-item:active, .stat-box:active, .settings-item:active {
+            text-shadow: 0 0 8px var(--green), 0 0 15px var(--green);
+        }
+        
+        .phosphor-trail {
+            animation: phosphor-fade 0.5s ease-out forwards;
+        }
+        
+        @keyframes phosphor-fade {
+            0% {
+                text-shadow: 0 0 10px var(--green), 0 0 20px var(--green), 0 0 30px var(--green);
+                opacity: 1;
+            }
+            100% {
+                text-shadow: 0 0 2px var(--green);
+                opacity: 0.8;
+            }
+        }
+        
+        /* STATIC NOISE OVERLAY */
+        .static-noise {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9997;
+            mix-blend-mode: overlay;
+        }
+        
+        .static-noise.active {
+            animation: static-burst 0.3s steps(4) forwards;
+        }
+        
+        @keyframes static-burst {
+            0% { opacity: 0.4; }
+            25% { opacity: 0.2; }
+            50% { opacity: 0.5; }
+            75% { opacity: 0.1; }
+            100% { opacity: 0; }
+        }
+        
+        /* BOSS MODE */
+        .boss-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            padding: 20px;
+        }
+        
+        .boss-overlay.active {
+            display: flex;
+        }
+        
+        .boss-title {
+            font-size: 10px;
+            color: var(--red);
+            margin-bottom: 20px;
+            animation: boss-pulse 1s infinite;
+        }
+        
+        @keyframes boss-pulse {
+            0%, 100% { text-shadow: 0 0 10px var(--red); }
+            50% { text-shadow: 0 0 20px var(--red), 0 0 30px var(--red); }
+        }
+        
+        .boss-task {
+            font-size: 8px;
+            color: var(--green);
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 280px;
+        }
+        
+        .boss-timer {
+            font-family: 'Fira Code', monospace;
+            font-size: 48px;
+            color: var(--green);
+            text-shadow: 0 0 20px var(--green);
+            margin-bottom: 20px;
+        }
+        
+        .boss-timer.warning {
+            color: var(--amber);
+            text-shadow: 0 0 20px var(--amber);
+        }
+        
+        .boss-timer.danger {
+            color: var(--red);
+            text-shadow: 0 0 20px var(--red);
+            animation: timer-shake 0.5s infinite;
+        }
+        
+        @keyframes timer-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .boss-progress {
+            width: 100%;
+            max-width: 280px;
+            height: 20px;
+            border: 2px solid var(--green);
+            padding: 2px;
+            margin-bottom: 20px;
+        }
+        
+        .boss-progress-fill {
+            height: 100%;
+            background: var(--green);
+            transition: width 1s linear;
+        }
+        
+        .boss-progress-fill.warning {
+            background: var(--amber);
+        }
+        
+        .boss-progress-fill.danger {
+            background: var(--red);
+        }
+        
+        .boss-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .boss-btn {
+            padding: 12px 20px;
+            border: 2px solid var(--green);
+            background: var(--bg);
+            color: var(--green);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            cursor: pointer;
+        }
+        
+        .boss-btn:active {
+            background: var(--green);
+            color: var(--bg);
+        }
+        
+        .boss-btn.fail {
+            border-color: var(--red);
+            color: var(--red);
+        }
+        
+        .boss-xp-bonus {
+            font-size: 6px;
+            color: var(--amber);
+            margin-top: 12px;
+        }
+        
         /* BLINKING CURSOR */
         .cursor {
             display: inline-block;
@@ -99,12 +283,44 @@
         }
         
         .boot-logo {
-            font-size: 5px;
+            font-family: 'Fira Code', monospace;
+            font-size: 8px;
+            font-weight: 700;
             color: var(--green);
             white-space: pre;
-            line-height: 1.1;
-            margin-bottom: 20px;
+            line-height: 1.4;
+            margin-bottom: 24px;
             text-align: center;
+            text-shadow: 0 0 10px var(--green);
+            animation: glitch 3s infinite;
+            position: relative;
+        }
+        
+        @keyframes glitch {
+            0%, 92%, 100% {
+                text-shadow: 0 0 10px var(--green);
+                transform: translate(0);
+            }
+            93% {
+                text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px var(--green);
+                transform: translate(2px, 0);
+            }
+            94% {
+                text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px var(--green);
+                transform: translate(-2px, 0);
+            }
+            95% {
+                text-shadow: 0 0 10px var(--green);
+                transform: translate(0);
+            }
+            96% {
+                text-shadow: -1px 0 #ff0000, 1px 0 #00ffff, 0 0 10px var(--green);
+                transform: translate(1px, 1px);
+            }
+            97% {
+                text-shadow: 0 0 10px var(--green);
+                transform: translate(0);
+            }
         }
         
         .boot-text {
@@ -742,6 +958,24 @@
         <div class="levelup-number" id="levelupNum">02</div>
         <div class="levelup-text">PRESS ANY KEY TO CONTINUE...</div>
     </div>
+    
+    <!-- STATIC NOISE -->
+    <div class="static-noise" id="staticNoise"></div>
+    
+    <!-- BOSS MODE -->
+    <div class="boss-overlay" id="bossOverlay">
+        <div class="boss-title">☠ BOSS BATTLE ☠</div>
+        <div class="boss-task" id="bossTask">COMPLETE THE TASK BEFORE TIME RUNS OUT!</div>
+        <div class="boss-timer" id="bossTimer">25:00</div>
+        <div class="boss-progress">
+            <div class="boss-progress-fill" id="bossProgressFill" style="width: 100%"></div>
+        </div>
+        <div class="boss-xp-bonus">★ BONUS: X2 XP ★</div>
+        <div class="boss-buttons">
+            <button class="boss-btn fail" onclick="App.bossFail()">[ESC] GIVE UP</button>
+            <button class="boss-btn" onclick="App.bossWin()">[ENTER] COMPLETE</button>
+        </div>
+    </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
@@ -790,6 +1024,17 @@ class TaskSys {
         this.spinnerFrames = ['|', '/', '-', '\\'];
         this.spinnerIndex = 0;
         
+        // Audio context for 8-bit sounds
+        this.audioCtx = null;
+        
+        // Boss mode
+        this.bossActive = false;
+        this.bossTask = null;
+        this.bossTimer = null;
+        this.bossTimeLeft = 0;
+        this.bossDuration = 0;
+        this.selectedBossTime = 30;
+        
         this.dom = {
             bootScreen: document.getElementById('bootScreen'),
             bootLogo: document.getElementById('bootLogo'),
@@ -810,7 +1055,12 @@ class TaskSys {
             levelup: document.getElementById('levelupOverlay'),
             levelupNum: document.getElementById('levelupNum'),
             statusLeft: document.getElementById('statusLeft'),
-            statusRight: document.getElementById('statusRight')
+            statusRight: document.getElementById('statusRight'),
+            staticNoise: document.getElementById('staticNoise'),
+            bossOverlay: document.getElementById('bossOverlay'),
+            bossTask: document.getElementById('bossTask'),
+            bossTimerEl: document.getElementById('bossTimer'),
+            bossProgressFill: document.getElementById('bossProgressFill')
         };
     }
     
@@ -1033,6 +1283,9 @@ class TaskSys {
     // ═══════════════════════════════════════════════════════════════════════
     
     go(tab) {
+        if (this.currentTab !== tab) {
+            this.showStaticNoise();
+        }
         this.currentTab = tab;
         document.querySelectorAll('.nav-item').forEach(n => {
             n.classList.toggle('active', n.dataset.tab === tab);
@@ -1108,6 +1361,7 @@ class TaskSys {
     
     taskHTML(t) {
         const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
+        const bossBtn = !t.done ? `<button class="task-delete" style="color: var(--amber);" onclick="event.stopPropagation(); App.initBoss('${t.id}')">[☠]</button>` : '';
         return `
             <div class="task-item ${t.done ? 'completed' : ''}">
                 <div class="task-priority ${t.priority}">${priorityChar}</div>
@@ -1121,9 +1375,15 @@ class TaskSys {
                         <span>${t.priority}</span>
                     </div>
                 </div>
+                ${bossBtn}
                 <button class="task-delete" onclick="App.delTask('${t.id}')">[DEL]</button>
             </div>
         `;
+    }
+    
+    async initBoss(id) {
+        const task = await this.dbGet('tasks', id);
+        if (task) this.showBossModal(task);
     }
     
     async getTodayTasks() {
@@ -1531,11 +1791,216 @@ class TaskSys {
     showLevelUp(lvl) {
         this.dom.levelupNum.textContent = String(lvl).padStart(2, '0');
         this.dom.levelup.classList.add('active');
+        this.playLevelUpSound();
         setTimeout(() => this.closeLevelUp(), 3000);
     }
     
     closeLevelUp() {
         this.dom.levelup.classList.remove('active');
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 8-BIT AUDIO
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    initAudio() {
+        if (!this.audioCtx) {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return this.audioCtx;
+    }
+    
+    playNote(freq, duration, type = 'square', volume = 0.3) {
+        try {
+            const ctx = this.initAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            
+            gain.gain.setValueAtTime(volume, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration);
+        } catch(e) {}
+    }
+    
+    playLevelUpSound() {
+        // 8-bit victory melody: C-E-G-C (arpeggio up)
+        const melody = [
+            { freq: 523, delay: 0 },      // C5
+            { freq: 659, delay: 100 },    // E5
+            { freq: 784, delay: 200 },    // G5
+            { freq: 1047, delay: 300 },   // C6
+            { freq: 1047, delay: 500 },   // C6 (repeat)
+            { freq: 1175, delay: 600 },   // D6
+            { freq: 1319, delay: 700 },   // E6
+        ];
+        
+        melody.forEach(note => {
+            setTimeout(() => this.playNote(note.freq, 0.15, 'square', 0.2), note.delay);
+        });
+    }
+    
+    playStaticSound() {
+        try {
+            const ctx = this.initAudio();
+            const bufferSize = ctx.sampleRate * 0.1;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = ctx.createBufferSource();
+            const gain = ctx.createGain();
+            
+            noise.buffer = buffer;
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            
+            noise.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start();
+        } catch(e) {}
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STATIC NOISE EFFECT
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    showStaticNoise() {
+        this.dom.staticNoise.classList.remove('active');
+        void this.dom.staticNoise.offsetWidth; // Force reflow
+        this.dom.staticNoise.classList.add('active');
+        this.playStaticSound();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // BOSS MODE
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    startBoss(task, minutes) {
+        this.bossActive = true;
+        this.bossTask = task;
+        this.bossDuration = minutes * 60;
+        this.bossTimeLeft = this.bossDuration;
+        
+        this.dom.bossTask.textContent = task.text;
+        this.updateBossTimer();
+        this.dom.bossOverlay.classList.add('active');
+        
+        this.bossTimer = setInterval(() => {
+            this.bossTimeLeft--;
+            this.updateBossTimer();
+            
+            if (this.bossTimeLeft <= 0) {
+                this.bossFail();
+            }
+        }, 1000);
+        
+        this.setStatus('BOSS BATTLE!', 'FOCUS MODE');
+    }
+    
+    updateBossTimer() {
+        const mins = Math.floor(this.bossTimeLeft / 60);
+        const secs = this.bossTimeLeft % 60;
+        this.dom.bossTimerEl.textContent = 
+            String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        
+        const pct = (this.bossTimeLeft / this.bossDuration) * 100;
+        this.dom.bossProgressFill.style.width = pct + '%';
+        
+        // Color changes
+        const timerEl = this.dom.bossTimerEl;
+        const fillEl = this.dom.bossProgressFill;
+        
+        timerEl.classList.remove('warning', 'danger');
+        fillEl.classList.remove('warning', 'danger');
+        
+        if (pct <= 20) {
+            timerEl.classList.add('danger');
+            fillEl.classList.add('danger');
+        } else if (pct <= 50) {
+            timerEl.classList.add('warning');
+            fillEl.classList.add('warning');
+        }
+    }
+    
+    async bossWin() {
+        clearInterval(this.bossTimer);
+        this.bossActive = false;
+        
+        // Mark task as done with DOUBLE XP
+        const task = this.bossTask;
+        task.done = true;
+        await this.dbPut('tasks', task);
+        
+        const bonusXP = task.xp * 2;
+        this.user.total++;
+        await this.addXP(bonusXP);
+        
+        this.dom.bossOverlay.classList.remove('active');
+        this.toast('BOSS DEFEATED! +' + bonusXP + ' XP (2X BONUS!)');
+        this.render();
+        this.setStatus('VICTORY!', 'BOSS DEFEATED');
+    }
+    
+    bossFail() {
+        clearInterval(this.bossTimer);
+        this.bossActive = false;
+        
+        this.dom.bossOverlay.classList.remove('active');
+        this.toast('BOSS ESCAPED! NO XP EARNED', 'error');
+        this.render();
+        this.setStatus('DEFEAT...', 'TRY AGAIN');
+    }
+    
+    showBossModal(task) {
+        this.showModal('☠ BOSS BATTLE ☠', `
+            <div style="font-size: 7px; color: var(--amber); margin-bottom: 16px; text-align: center;">
+                ╔═══════════════════════╗<br>
+                ║   FOCUS MODE ACTIVE   ║<br>
+                ║                       ║<br>
+                ║  COMPLETE THE TASK    ║<br>
+                ║  BEFORE TIME RUNS OUT ║<br>
+                ╚═══════════════════════╝
+            </div>
+            <div style="font-size: 6px; color: var(--green); margin-bottom: 16px; text-align: center;">
+                ${this.esc(task.text)}
+            </div>
+            <div class="form-group">
+                <label class="form-label">SELECT TIME:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-time="15" onclick="App.setBossTime(15)">15M</button>
+                    <button class="select-btn active" data-time="30" onclick="App.setBossTime(30)">30M</button>
+                    <button class="select-btn" data-time="45" onclick="App.setBossTime(45)">45M</button>
+                    <button class="select-btn" data-time="60" onclick="App.setBossTime(60)">60M</button>
+                </div>
+            </div>
+            <div style="font-size: 6px; color: var(--amber); margin-bottom: 16px; text-align: center;">
+                ★ REWARD: ${task.xp * 2} XP (2X BONUS!) ★
+            </div>
+            <div class="select-row">
+                <button class="btn-submit" style="border-color: var(--green-dim); color: var(--green-dim);" onclick="App.closeModal()">[ESC] CANCEL</button>
+                <button class="btn-submit" style="border-color: var(--amber); color: var(--amber);" onclick="App.closeModal(); App.startBoss(App.pendingBossTask, App.selectedBossTime)">START!</button>
+            </div>
+        `);
+        this.pendingBossTask = task;
+        this.selectedBossTime = 30;
+    }
+    
+    setBossTime(mins) {
+        this.selectedBossTime = mins;
+        document.querySelectorAll('[data-time]').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.time) === mins);
+        });
     }
     
     esc(txt) {
