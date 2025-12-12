@@ -714,6 +714,15 @@
             border-color: var(--green);
         }
         
+        .input[type="date"] {
+            color-scheme: dark;
+        }
+        
+        .input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) sepia(1) saturate(5) hue-rotate(85deg);
+            cursor: pointer;
+        }
+        
         .select-row {
             display: flex;
             gap: 4px;
@@ -915,9 +924,9 @@
                 <div class="nav-key">[F1]</div>
                 <div>TASKS</div>
             </div>
-            <div class="nav-item" onclick="App.go('stats')" data-tab="stats">
+            <div class="nav-item" onclick="App.go('plan')" data-tab="plan">
                 <div class="nav-key">[F2]</div>
-                <div>STATS</div>
+                <div>PLAN</div>
             </div>
             <div class="nav-item" onclick="App.go('sys')" data-tab="sys">
                 <div class="nav-key">[F3]</div>
@@ -1296,7 +1305,7 @@ class TaskSys {
     render() {
         this.setStatus('LOADING<span class="loading-dots"></span>');
         if (this.currentTab === 'tasks') this.renderTasks();
-        else if (this.currentTab === 'stats') this.renderStats();
+        else if (this.currentTab === 'plan') this.renderPlan();
         else if (this.currentTab === 'sys') this.renderSys();
     }
     
@@ -1566,10 +1575,268 @@ class TaskSys {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STATS
+    // PLAN - FUTURE TASKS
     // ═══════════════════════════════════════════════════════════════════════
     
-    async renderStats() {
+    async renderPlan() {
+        const planned = await this.getPlannedTasks();
+        const tomorrow = this.getTomorrow();
+        const weekEnd = this.getWeekEnd();
+        
+        // Group tasks
+        const tomorrowTasks = planned.filter(t => t.date === tomorrow);
+        const weekTasks = planned.filter(t => t.date > tomorrow && t.date <= weekEnd);
+        const laterTasks = planned.filter(t => t.date > weekEnd);
+        
+        this.dom.content.innerHTML = `
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-value">${tomorrowTasks.length}</div>
+                    <div class="stat-label">TOMORROW</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${weekTasks.length}</div>
+                    <div class="stat-label">THIS WEEK</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${laterTasks.length}</div>
+                    <div class="stat-label">LATER</div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ PLANNED TASKS ══╗</div>
+                <div class="dos-box-content">
+                    <div class="add-row">
+                        <span style="font-size: 6px; color: var(--green-dim);">DIR C:\\PLAN\\*.*</span>
+                        <button class="add-btn" onclick="App.addPlanTask()">[+] SCHEDULE</button>
+                    </div>
+                    
+                    ${planned.length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-ascii">
+    ╔═══════════════════╗
+    ║   NO PLANS YET    ║
+    ║                   ║
+    ║   SCHEDULE AHEAD! ║
+    ╚═══════════════════╝
+                            </div>
+                            <div>PLAN YOUR FUTURE</div>
+                        </div>
+                    ` : `
+                        ${tomorrowTasks.length > 0 ? `
+                            <div style="font-size: 6px; color: var(--amber); margin: 8px 0 4px; border-bottom: 1px solid var(--green-dark); padding-bottom: 4px;">
+                                ► TOMORROW (${this.formatDate(tomorrow)})
+                            </div>
+                            <div class="task-list">
+                                ${tomorrowTasks.map(t => this.planTaskHTML(t)).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${weekTasks.length > 0 ? `
+                            <div style="font-size: 6px; color: var(--cyan); margin: 8px 0 4px; border-bottom: 1px solid var(--green-dark); padding-bottom: 4px;">
+                                ► THIS WEEK
+                            </div>
+                            <div class="task-list">
+                                ${weekTasks.map(t => this.planTaskHTML(t)).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${laterTasks.length > 0 ? `
+                            <div style="font-size: 6px; color: var(--green-dim); margin: 8px 0 4px; border-bottom: 1px solid var(--green-dark); padding-bottom: 4px;">
+                                ► LATER
+                            </div>
+                            <div class="task-list">
+                                ${laterTasks.map(t => this.planTaskHTML(t)).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 8px; font-size: 5px; color: var(--green-dim);">
+                            ${planned.length} SCHEDULED TASK(S)
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+        
+        this.setStatus('READY', 'PLANNED: ' + planned.length);
+    }
+    
+    planTaskHTML(t) {
+        const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
+        const daysUntil = this.daysUntil(t.date);
+        const dateLabel = daysUntil === 1 ? 'TOMORROW' : 
+                         daysUntil <= 7 ? this.formatDate(t.date) : 
+                         t.date;
+        return `
+            <div class="task-item">
+                <div class="task-priority ${t.priority}">${priorityChar}</div>
+                <div class="task-content" onclick="App.editPlanTask('${t.id}')">
+                    <div class="task-text">${this.esc(t.text)}</div>
+                    <div class="task-meta">
+                        <span>+${t.xp}XP</span>
+                        <span style="color: var(--cyan);">${dateLabel}</span>
+                    </div>
+                </div>
+                <button class="task-delete" onclick="App.delTask('${t.id}')">[DEL]</button>
+            </div>
+        `;
+    }
+    
+    async getPlannedTasks() {
+        const all = await this.dbAll('tasks');
+        const today = this.today();
+        return all.filter(t => t.date > today && !t.done).sort((a, b) => {
+            return a.date.localeCompare(b.date);
+        });
+    }
+    
+    getTomorrow() {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0];
+    }
+    
+    getWeekEnd() {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        return d.toISOString().split('T')[0];
+    }
+    
+    daysUntil(dateStr) {
+        const target = new Date(dateStr);
+        const today = new Date(this.today());
+        const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+        return diff;
+    }
+    
+    formatDate(dateStr) {
+        const d = new Date(dateStr);
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+    }
+    
+    addPlanTask() {
+        const tomorrow = this.getTomorrow();
+        this.showModal('SCHEDULE TASK', `
+            <div class="form-group">
+                <label class="form-label">DESCRIPTION:</label>
+                <input type="text" class="input" id="taskInput" placeholder="ENTER TASK...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">DATE:</label>
+                <input type="date" class="input" id="planDate" value="${tomorrow}" min="${tomorrow}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">PRIORITY:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-priority="low" onclick="App.setPriority('low')">LOW</button>
+                    <button class="select-btn active" data-priority="medium" onclick="App.setPriority('medium')">MED</button>
+                    <button class="select-btn" data-priority="high" onclick="App.setPriority('high')">HIGH</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-xp="5" onclick="App.setXP(5)">+5</button>
+                    <button class="select-btn active" data-xp="10" onclick="App.setXP(10)">+10</button>
+                    <button class="select-btn" data-xp="20" onclick="App.setXP(20)">+20</button>
+                    <button class="select-btn" data-xp="50" onclick="App.setXP(50)">+50</button>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="App.savePlanTask()">[ENTER] SCHEDULE</button>
+        `);
+        
+        this.selectedPriority = 'medium';
+        this.selectedXP = 10;
+    }
+    
+    async savePlanTask() {
+        const text = document.getElementById('taskInput').value.trim();
+        const date = document.getElementById('planDate').value;
+        if (!text || !date) return;
+        
+        const task = {
+            id: Date.now().toString(),
+            text: text,
+            date: date,
+            priority: this.selectedPriority,
+            xp: this.selectedXP,
+            done: false
+        };
+        
+        await this.dbPut('tasks', task);
+        this.closeModal();
+        this.toast('TASK SCHEDULED FOR ' + this.formatDate(date));
+        this.render();
+    }
+    
+    async editPlanTask(id) {
+        const task = await this.dbGet('tasks', id);
+        if (!task) return;
+        
+        this.showModal('EDIT SCHEDULED TASK', `
+            <div class="form-group">
+                <label class="form-label">DESCRIPTION:</label>
+                <input type="text" class="input" id="editInput" value="${this.esc(task.text)}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">DATE:</label>
+                <input type="date" class="input" id="editDate" value="${task.date}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">PRIORITY:</label>
+                <div class="select-row">
+                    <button class="select-btn ${task.priority === 'low' ? 'active' : ''}" data-priority="low" onclick="App.setPriority('low')">LOW</button>
+                    <button class="select-btn ${task.priority === 'medium' ? 'active' : ''}" data-priority="medium" onclick="App.setPriority('medium')">MED</button>
+                    <button class="select-btn ${task.priority === 'high' ? 'active' : ''}" data-priority="high" onclick="App.setPriority('high')">HIGH</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn ${task.xp === 5 ? 'active' : ''}" data-xp="5" onclick="App.setXP(5)">+5</button>
+                    <button class="select-btn ${task.xp === 10 ? 'active' : ''}" data-xp="10" onclick="App.setXP(10)">+10</button>
+                    <button class="select-btn ${task.xp === 20 ? 'active' : ''}" data-xp="20" onclick="App.setXP(20)">+20</button>
+                    <button class="select-btn ${task.xp === 50 ? 'active' : ''}" data-xp="50" onclick="App.setXP(50)">+50</button>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="App.updatePlanTask('${task.id}')">[ENTER] UPDATE</button>
+        `);
+        
+        this.selectedPriority = task.priority;
+        this.selectedXP = task.xp;
+    }
+    
+    async updatePlanTask(id) {
+        const task = await this.dbGet('tasks', id);
+        if (!task) return;
+        
+        task.text = document.getElementById('editInput').value.trim();
+        task.date = document.getElementById('editDate').value;
+        task.priority = this.selectedPriority;
+        task.xp = this.selectedXP;
+        
+        await this.dbPut('tasks', task);
+        this.closeModal();
+        this.toast('TASK RESCHEDULED');
+        this.render();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async renderSys() {
         const all = await this.dbAll('tasks');
         const done = all.filter(t => t.done);
         const totalXP = (this.user.level - 1) * this.XP_MAX + this.user.xp;
@@ -1596,33 +1863,17 @@ class TaskSys {
                             <div class="stat-label">STREAK</div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="dos-box">
-                <div class="dos-box-title">╔══ TASK HISTORY ══╗</div>
-                <div class="dos-box-content">
-                    <div class="stats-row">
+                    <div class="stats-row" style="margin-top: 8px;">
                         <div class="stat-box">
                             <div class="stat-value">${this.user.total}</div>
                             <div class="stat-label">COMPLETED</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${all.length}</div>
-                            <div class="stat-label">TOTAL</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-value">${all.length ? Math.round((done.length / all.length) * 100) : 0}%</div>
                             <div class="stat-label">RATE</div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="dos-box">
-                <div class="dos-box-title">╔══ BY PRIORITY ══╗</div>
-                <div class="dos-box-content">
-                    <div class="stats-row">
+                    <div class="stats-row" style="margin-top: 8px;">
                         <div class="stat-box">
                             <div class="stat-value" style="color: var(--red);">${hi}</div>
                             <div class="stat-label">! HIGH</div>
@@ -1638,17 +1889,7 @@ class TaskSys {
                     </div>
                 </div>
             </div>
-        `;
-        
-        this.setStatus('STATS LOADED', 'XP: ' + totalXP);
-    }
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // SYSTEM
-    // ═══════════════════════════════════════════════════════════════════════
-    
-    renderSys() {
-        this.dom.content.innerHTML = `
+            
             <div class="dos-box">
                 <div class="dos-box-title">╔══ SYSTEM CONFIG ══╗</div>
                 <div class="dos-box-content">
@@ -1685,7 +1926,7 @@ class TaskSys {
             </div>
         `;
         
-        this.setStatus('SYSTEM', 'VER 1.0');
+        this.setStatus('SYSTEM', 'XP: ' + totalXP);
     }
     
     async exportData() {
