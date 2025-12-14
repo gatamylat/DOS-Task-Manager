@@ -33,6 +33,7 @@
             --amber: #ffaa00;
             --red: #ff3333;
             --cyan: #00ffff;
+            --magenta: #ff00ff;
             --bg: #000000;
             --bg-light: #0a0a0a;
             --safe-top: env(safe-area-inset-top);
@@ -616,7 +617,7 @@
         
         .nav-item {
             flex: 1;
-            padding: 10px 4px;
+            padding: 8px 2px;
             text-align: center;
             color: var(--green-dim);
             cursor: pointer;
@@ -877,6 +878,209 @@
             75% { content: '...'; }
             100% { content: ''; }
         }
+        
+        /* TAGS */
+        .tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        
+        .tag {
+            font-size: 5px;
+            padding: 2px 6px;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .tag.selected {
+            background: var(--cyan);
+            color: var(--bg);
+        }
+        
+        .tag-inline {
+            font-size: 5px;
+            color: var(--cyan);
+            margin-left: 4px;
+        }
+        
+        /* SUBTASKS */
+        .subtasks-list {
+            margin-top: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--green-dark);
+        }
+        
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            font-size: 6px;
+        }
+        
+        .subtask-checkbox {
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--green-dim);
+            background: var(--bg);
+            color: var(--green);
+            font-size: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .subtask-text {
+            flex: 1;
+        }
+        
+        .subtask-text.done {
+            text-decoration: line-through;
+            color: var(--green-dim);
+        }
+        
+        .subtask-del {
+            color: var(--red);
+            cursor: pointer;
+            font-size: 6px;
+        }
+        
+        .subtask-progress {
+            font-size: 5px;
+            color: var(--green-dim);
+            margin-top: 4px;
+        }
+        
+        .add-subtask-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .add-subtask-row input {
+            flex: 1;
+            padding: 4px;
+            font-size: 6px;
+        }
+        
+        .add-subtask-row button {
+            padding: 4px 8px;
+            font-size: 6px;
+        }
+        
+        /* ACHIEVEMENTS */
+        .achievement-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 6000;
+            padding: 20px;
+        }
+        
+        .achievement-overlay.active {
+            display: flex;
+            animation: achievement-appear 0.5s ease-out;
+        }
+        
+        @keyframes achievement-appear {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .achievement-icon {
+            font-size: 48px;
+            color: var(--amber);
+            text-shadow: 0 0 20px var(--amber), 0 0 40px var(--amber);
+            margin-bottom: 16px;
+            animation: achievement-glow 1s infinite alternate;
+        }
+        
+        @keyframes achievement-glow {
+            0% { text-shadow: 0 0 20px var(--amber); }
+            100% { text-shadow: 0 0 40px var(--amber), 0 0 60px var(--amber); }
+        }
+        
+        .achievement-title {
+            font-size: 10px;
+            color: var(--amber);
+            margin-bottom: 8px;
+        }
+        
+        .achievement-name {
+            font-size: 14px;
+            color: var(--green);
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px var(--green);
+        }
+        
+        .achievement-desc {
+            font-size: 7px;
+            color: var(--green-dim);
+            margin-bottom: 20px;
+        }
+        
+        .achievement-continue {
+            font-size: 6px;
+            color: var(--green-dim);
+            animation: blink 1s step-end infinite;
+        }
+        
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .achievement-card {
+            padding: 8px;
+            border: 1px solid var(--green-dark);
+            text-align: center;
+        }
+        
+        .achievement-card.unlocked {
+            border-color: var(--amber);
+        }
+        
+        .achievement-card.locked {
+            opacity: 0.4;
+        }
+        
+        .achievement-card-icon {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .achievement-card.unlocked .achievement-card-icon {
+            color: var(--amber);
+        }
+        
+        .achievement-card-name {
+            font-size: 5px;
+            color: var(--green);
+        }
+        
+        /* DEADLINE */
+        .deadline-badge {
+            font-size: 5px;
+            color: var(--amber);
+            margin-left: 4px;
+        }
+        
+        .deadline-badge.urgent {
+            color: var(--red);
+            animation: blink 1s step-end infinite;
+        }
     </style>
 </head>
 <body>
@@ -930,7 +1134,11 @@
             </div>
             <div class="nav-item" onclick="App.go('sys')" data-tab="sys">
                 <div class="nav-key">[F3]</div>
-                <div>SYSTEM</div>
+                <div>SYS</div>
+            </div>
+            <div class="nav-item" onclick="App.go('stats')" data-tab="stats">
+                <div class="nav-key">[F4]</div>
+                <div>STATS</div>
             </div>
         </nav>
         
@@ -985,6 +1193,15 @@
             <button class="boss-btn" onclick="App.bossWin()">[ENTER] COMPLETE</button>
         </div>
     </div>
+    
+    <!-- ACHIEVEMENT UNLOCK -->
+    <div class="achievement-overlay" id="achievementOverlay" onclick="App.closeAchievement()">
+        <div class="achievement-icon" id="achievementIcon">★</div>
+        <div class="achievement-title">ACHIEVEMENT UNLOCKED!</div>
+        <div class="achievement-name" id="achievementName">FIRST BLOOD</div>
+        <div class="achievement-desc" id="achievementDesc">Complete your first task</div>
+        <div class="achievement-continue">PRESS ANY KEY TO CONTINUE...</div>
+    </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1026,10 +1243,19 @@ class TaskSys {
     constructor() {
         this.db = null;
         this.currentTab = 'tasks';
-        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: null };
+        this.user = { 
+            level: 1, 
+            xp: 0, 
+            total: 0, 
+            streak: 0, 
+            lastDate: null,
+            achievements: [],
+            bossWins: 0
+        };
         this.XP_MAX = 100;
         this.selectedPriority = 'medium';
         this.selectedXP = 10;
+        this.selectedTags = [];
         this.spinnerFrames = ['|', '/', '-', '\\'];
         this.spinnerIndex = 0;
         
@@ -1043,6 +1269,27 @@ class TaskSys {
         this.bossTimeLeft = 0;
         this.bossDuration = 0;
         this.selectedBossTime = 30;
+        
+        // Achievements definitions
+        this.ACHIEVEMENTS = [
+            { id: 'first_blood', name: 'FIRST BLOOD', desc: 'Complete your first task', icon: '†', check: (u) => u.total >= 1 },
+            { id: 'getting_started', name: 'GETTING STARTED', desc: 'Complete 10 tasks', icon: '★', check: (u) => u.total >= 10 },
+            { id: 'productive', name: 'PRODUCTIVE', desc: 'Complete 50 tasks', icon: '◆', check: (u) => u.total >= 50 },
+            { id: 'task_master', name: 'TASK MASTER', desc: 'Complete 100 tasks', icon: '♦', check: (u) => u.total >= 100 },
+            { id: 'streak_3', name: 'ON FIRE', desc: '3 day streak', icon: '♨', check: (u) => u.streak >= 3 },
+            { id: 'streak_7', name: 'UNSTOPPABLE', desc: '7 day streak', icon: '☀', check: (u) => u.streak >= 7 },
+            { id: 'streak_30', name: 'LEGENDARY', desc: '30 day streak', icon: '♛', check: (u) => u.streak >= 30 },
+            { id: 'level_5', name: 'LEVELING UP', desc: 'Reach level 5', icon: '▲', check: (u) => u.level >= 5 },
+            { id: 'level_10', name: 'VETERAN', desc: 'Reach level 10', icon: '◄►', check: (u) => u.level >= 10 },
+            { id: 'boss_slayer', name: 'BOSS SLAYER', desc: 'Win 5 boss battles', icon: '☠', check: (u) => u.bossWins >= 5 },
+            { id: 'boss_hunter', name: 'BOSS HUNTER', desc: 'Win 20 boss battles', icon: '⚔', check: (u) => u.bossWins >= 20 }
+        ];
+        
+        // Deadline check interval
+        this.deadlineInterval = null;
+        
+        // Tag filter
+        this.filterTag = null;
         
         this.dom = {
             bootScreen: document.getElementById('bootScreen'),
@@ -1069,7 +1316,11 @@ class TaskSys {
             bossOverlay: document.getElementById('bossOverlay'),
             bossTask: document.getElementById('bossTask'),
             bossTimerEl: document.getElementById('bossTimer'),
-            bossProgressFill: document.getElementById('bossProgressFill')
+            bossProgressFill: document.getElementById('bossProgressFill'),
+            achievementOverlay: document.getElementById('achievementOverlay'),
+            achievementIcon: document.getElementById('achievementIcon'),
+            achievementName: document.getElementById('achievementName'),
+            achievementDesc: document.getElementById('achievementDesc')
         };
     }
     
@@ -1142,10 +1393,64 @@ class TaskSys {
         this.updateClock();
         this.startSpinner();
         this.updateXP();
-        this.checkStreak();
+        await this.checkStreak();
         this.render();
         
+        // Request notification permission
+        this.requestNotificationPermission();
+        
+        // Start deadline checker (every minute)
+        this.startDeadlineChecker();
+        
         this.setStatus('READY', 'TASKS: ' + (await this.dbAll('tasks')).length);
+    }
+    
+    async requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            await Notification.requestPermission();
+        }
+    }
+    
+    startDeadlineChecker() {
+        // Check every minute
+        this.deadlineInterval = setInterval(() => this.checkDeadlines(), 60000);
+        // Initial check
+        this.checkDeadlines();
+    }
+    
+    async checkDeadlines() {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        
+        const tasks = await this.dbAll('tasks');
+        const now = new Date();
+        
+        tasks.forEach(task => {
+            if (task.done || !task.deadline) return;
+            
+            const deadline = new Date(task.deadline);
+            const diff = deadline - now;
+            const minutes = Math.floor(diff / 60000);
+            
+            // Notify 15 minutes before
+            if (minutes > 0 && minutes <= 15 && !task.notified15) {
+                this.showNotification('⚠ DEADLINE APPROACHING', `"${task.text}" in ${minutes} min!`);
+                task.notified15 = true;
+                this.dbPut('tasks', task);
+            }
+            
+            // Notify when overdue
+            if (minutes < 0 && minutes > -5 && !task.notifiedOverdue) {
+                this.showNotification('🔴 DEADLINE PASSED', `"${task.text}" is overdue!`);
+                task.notifiedOverdue = true;
+                this.dbPut('tasks', task);
+            }
+        });
+    }
+    
+    showNotification(title, body) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { body, icon: './icons/icon-192.png' });
+        }
     }
     
     startSpinner() {
@@ -1163,7 +1468,7 @@ class TaskSys {
     
     async initDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('TaskSysDB', 1);
+            const req = indexedDB.open('TaskSysDB', 2);
             req.onerror = () => reject(req.error);
             req.onsuccess = () => { this.db = req.result; resolve(); };
             req.onupgradeneeded = (e) => {
@@ -1173,6 +1478,9 @@ class TaskSys {
                 }
                 if (!db.objectStoreNames.contains('user')) {
                     db.createObjectStore('user', { keyPath: 'key' });
+                }
+                if (!db.objectStoreNames.contains('tags')) {
+                    db.createObjectStore('tags', { keyPath: 'id' });
                 }
             };
         });
@@ -1233,7 +1541,12 @@ class TaskSys {
     
     async loadUser() {
         const data = await this.dbGet('user', 'profile');
-        if (data) this.user = data.value;
+        if (data) {
+            this.user = data.value;
+            // Initialize new fields for existing users
+            if (!this.user.achievements) this.user.achievements = [];
+            if (!this.user.bossWins) this.user.bossWins = 0;
+        }
         else await this.saveUser();
     }
     
@@ -1247,6 +1560,7 @@ class TaskSys {
             this.user.xp -= this.XP_MAX;
             this.user.level++;
             this.showLevelUp(this.user.level);
+            await this.checkAchievements();
         }
         await this.saveUser();
         this.updateXP();
@@ -1266,7 +1580,7 @@ class TaskSys {
         this.dom.timeDisplay.textContent = now.toLocaleTimeString('ru-RU');
     }
     
-    checkStreak() {
+    async checkStreak() {
         const today = this.today();
         const last = this.user.lastDate;
         if (last) {
@@ -1280,7 +1594,8 @@ class TaskSys {
             this.user.streak = 1;
         }
         this.user.lastDate = today;
-        this.saveUser();
+        await this.saveUser();
+        await this.checkAchievements();
     }
     
     today() {
@@ -1307,6 +1622,7 @@ class TaskSys {
         if (this.currentTab === 'tasks') this.renderTasks();
         else if (this.currentTab === 'plan') this.renderPlan();
         else if (this.currentTab === 'sys') this.renderSys();
+        else if (this.currentTab === 'stats') this.renderStats();
     }
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -1314,17 +1630,45 @@ class TaskSys {
     // ═══════════════════════════════════════════════════════════════════════
     
     async renderTasks() {
-        const tasks = await this.getTodayTasks();
-        const overdue = await this.getOverdueTasks();
+        let tasks = await this.getTodayTasks();
+        let overdue = await this.getOverdueTasks();
+        const allTags = await this.getTags();
+        
+        // Filter by tag if selected
+        if (this.filterTag) {
+            tasks = tasks.filter(t => t.tags && t.tags.includes(this.filterTag));
+            overdue = overdue.filter(t => t.tags && t.tags.includes(this.filterTag));
+        }
+        
         const done = tasks.filter(t => t.done).length;
         const todo = tasks.filter(t => !t.done).length;
+        
+        const overdueTasksHTML = await Promise.all(overdue.map(t => this.taskHTML(t, true, allTags)));
+        const todayTasksHTML = await Promise.all(tasks.map(t => this.taskHTML(t, false, allTags)));
+        
+        // Tag filters
+        const tagFiltersHTML = allTags.length > 0 ? `
+            <div class="dos-box" style="padding: 8px; margin-bottom: 8px;">
+                <div style="font-size: 5px; color: var(--green-dim); margin-bottom: 6px;">FILTER BY TAG:</div>
+                <div class="tags-row">
+                    <span class="tag ${!this.filterTag ? 'selected' : ''}" 
+                          style="border-color: var(--green); color: ${!this.filterTag ? 'var(--bg)' : 'var(--green)'}; background: ${!this.filterTag ? 'var(--green)' : 'transparent'};"
+                          onclick="App.setTagFilter(null)">ALL</span>
+                    ${allTags.map(t => `
+                        <span class="tag ${this.filterTag === t.id ? 'selected' : ''}" 
+                              style="border-color: ${t.color}; color: ${this.filterTag === t.id ? 'var(--bg)' : t.color}; background: ${this.filterTag === t.id ? t.color : 'transparent'};"
+                              onclick="App.setTagFilter('${t.id}')">#${t.name}</span>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
         
         const overdueHTML = overdue.length > 0 ? `
             <div class="dos-box" style="border-color: var(--red);">
                 <div class="dos-box-title" style="background: var(--red); color: var(--bg);">╔══ ⚠ OVERDUE ══╗</div>
                 <div class="dos-box-content">
                     <div class="task-list">
-                        ${overdue.map(t => this.taskHTML(t, true)).join('')}
+                        ${overdueTasksHTML.join('')}
                     </div>
                     <div style="margin-top: 8px; font-size: 5px; color: var(--red);">
                         ${overdue.length} OVERDUE TASK(S)!
@@ -1332,6 +1676,8 @@ class TaskSys {
                 </div>
             </div>
         ` : '';
+        
+        const filterLabel = this.filterTag ? ` (FILTERED)` : '';
         
         this.dom.content.innerHTML = `
             <div class="stats-row">
@@ -1349,10 +1695,12 @@ class TaskSys {
                 </div>
             </div>
             
+            ${tagFiltersHTML}
+            
             ${overdueHTML}
             
             <div class="dos-box">
-                <div class="dos-box-title">╔══ TODAY'S TASKS ══╗</div>
+                <div class="dos-box-title">╔══ TODAY'S TASKS${filterLabel} ══╗</div>
                 <div class="dos-box-content">
                     <div class="add-row">
                         <span style="font-size: 6px; color: var(--green-dim);">DIR C:\\TASKS\\*.*</span>
@@ -1368,11 +1716,11 @@ class TaskSys {
     ║   0 FILE(S)       ║
     ╚═══════════════════╝
                             </div>
-                            <div>DIRECTORY IS EMPTY</div>
+                            <div>${this.filterTag ? 'NO TASKS WITH THIS TAG' : 'DIRECTORY IS EMPTY'}</div>
                         </div>
                     ` : `
                         <div class="task-list">
-                            ${tasks.map(t => this.taskHTML(t)).join('')}
+                            ${todayTasksHTML.join('')}
                         </div>
                         <div style="margin-top: 8px; font-size: 5px; color: var(--green-dim);">
                             ${tasks.length} FILE(S) - ${done} COMPLETED
@@ -1385,11 +1733,52 @@ class TaskSys {
         this.setStatus('READY', 'TASKS: ' + (tasks.length + overdue.length));
     }
     
-    taskHTML(t, isOverdue) {
+    setTagFilter(tagId) {
+        this.filterTag = tagId;
+        this.render();
+    }
+    
+    taskHTML(t, isOverdue, allTags) {
         const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
         const bossBtn = !t.done ? `<button class="task-delete" style="color: var(--amber);" onclick="event.stopPropagation(); App.initBoss('${t.id}')">[☠]</button>` : '';
         const overdueStyle = isOverdue ? 'border-color: var(--red);' : '';
         const dateLabel = isOverdue ? `<span style="color: var(--red);">${t.date}</span>` : '';
+        
+        // Tags
+        let tagsHTML = '';
+        if (t.tags && t.tags.length > 0 && allTags) {
+            tagsHTML = t.tags.map(tagId => {
+                const tag = allTags.find(tg => tg.id === tagId);
+                return tag ? `<span class="tag-inline" style="color: ${tag.color};">#${tag.name}</span>` : '';
+            }).join('');
+        }
+        
+        // Deadline
+        let deadlineHTML = '';
+        if (t.deadline && !t.done) {
+            const deadline = new Date(t.deadline);
+            const now = new Date();
+            const diff = deadline - now;
+            const minutes = Math.floor(diff / 60000);
+            
+            if (minutes < 0) {
+                deadlineHTML = `<span class="deadline-badge urgent">⚠ OVERDUE</span>`;
+            } else if (minutes <= 60) {
+                deadlineHTML = `<span class="deadline-badge urgent">⏰ ${minutes}M LEFT</span>`;
+            } else {
+                const time = t.deadline.split('T')[1];
+                deadlineHTML = `<span class="deadline-badge">⏰ ${time}</span>`;
+            }
+        }
+        
+        // Subtasks progress
+        let subtasksHTML = '';
+        if (t.subtasks && t.subtasks.length > 0) {
+            const done = t.subtasks.filter(s => s.done).length;
+            const total = t.subtasks.length;
+            subtasksHTML = `<span style="color: var(--cyan);">[${done}/${total}]</span>`;
+        }
+        
         return `
             <div class="task-item ${t.done ? 'completed' : ''}" style="${overdueStyle}">
                 <div class="task-priority ${t.priority}">${priorityChar}</div>
@@ -1397,10 +1786,11 @@ class TaskSys {
                     ${t.done ? 'X' : ' '}
                 </button>
                 <div class="task-content" onclick="App.editTask('${t.id}')">
-                    <div class="task-text">${this.esc(t.text)}</div>
+                    <div class="task-text">${this.esc(t.text)}${tagsHTML}</div>
                     <div class="task-meta">
                         <span>+${t.xp}XP</span>
-                        <span>${t.priority}</span>
+                        ${subtasksHTML}
+                        ${deadlineHTML}
                         ${dateLabel}
                     </div>
                 </div>
@@ -1434,11 +1824,23 @@ class TaskSys {
         });
     }
     
-    addTask() {
+    async addTask() {
+        const tagsHTML = await this.renderTagSelector([]);
+        
         this.showModal('NEW TASK', `
             <div class="form-group">
                 <label class="form-label">DESCRIPTION:</label>
                 <input type="text" class="input" id="taskInput" placeholder="ENTER TASK...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">DEADLINE (OPTIONAL):</label>
+                <input type="time" class="input" id="taskDeadline" placeholder="HH:MM">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">TAGS:</label>
+                <div class="tags-row" id="tagsSelector">${tagsHTML}</div>
             </div>
             
             <div class="form-group">
@@ -1465,6 +1867,7 @@ class TaskSys {
         
         this.selectedPriority = 'medium';
         this.selectedXP = 10;
+        this.selectedTags = [];
         setTimeout(() => document.getElementById('taskInput').focus(), 100);
     }
     
@@ -1486,6 +1889,12 @@ class TaskSys {
         const text = document.getElementById('taskInput').value.trim();
         if (!text) { this.toast('ERROR: EMPTY INPUT', 'error'); return; }
         
+        const deadlineTime = document.getElementById('taskDeadline').value;
+        let deadline = null;
+        if (deadlineTime) {
+            deadline = this.today() + 'T' + deadlineTime;
+        }
+        
         const task = {
             id: 't_' + Date.now(),
             text: text,
@@ -1493,7 +1902,10 @@ class TaskSys {
             xp: this.selectedXP,
             done: false,
             date: this.today(),
-            created: new Date().toISOString()
+            created: new Date().toISOString(),
+            tags: [...this.selectedTags],
+            deadline: deadline,
+            subtasks: []
         };
         
         await this.dbPut('tasks', task);
@@ -1513,6 +1925,7 @@ class TaskSys {
             this.user.total++;
             await this.addXP(task.xp);
             this.toast('TASK COMPLETE! +' + task.xp + ' XP');
+            await this.checkAchievements();
         }
         
         this.render();
@@ -1528,10 +1941,47 @@ class TaskSys {
         const task = await this.dbGet('tasks', id);
         if (!task) return;
         
+        const tagsHTML = await this.renderTagSelector(task.tags || []);
+        const subtasks = task.subtasks || [];
+        const subtasksListHTML = subtasks.map((s, i) => `
+            <div class="subtask-item">
+                <button class="subtask-checkbox" onclick="App.toggleSubtask('${task.id}', ${i}); App.editTask('${task.id}');">
+                    ${s.done ? 'X' : ' '}
+                </button>
+                <span class="subtask-text ${s.done ? 'done' : ''}">${this.esc(s.text)}</span>
+                <span class="subtask-del" onclick="App.delSubtask('${task.id}', ${i}); App.editTask('${task.id}');">[X]</span>
+            </div>
+        `).join('');
+        
+        const currentDeadline = task.deadline ? task.deadline.split('T')[1] || '' : '';
+        
         this.showModal('EDIT TASK', `
             <div class="form-group">
                 <label class="form-label">DESCRIPTION:</label>
                 <input type="text" class="input" id="editInput" value="${this.esc(task.text)}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">DEADLINE (OPTIONAL):</label>
+                <input type="time" class="input" id="editDeadline" value="${currentDeadline}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">TAGS:</label>
+                <div class="tags-row" id="tagsSelector">${tagsHTML}</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">SUBTASKS:</label>
+                ${subtasks.length > 0 ? `
+                    <div class="subtasks-list" style="border: none; padding: 0;">
+                        ${subtasksListHTML}
+                    </div>
+                ` : '<div style="font-size: 6px; color: var(--green-dim);">NO SUBTASKS</div>'}
+                <div class="add-subtask-row">
+                    <input type="text" class="input" id="subtaskInput-${task.id}" placeholder="ADD SUBTASK...">
+                    <button class="btn-submit" style="width: auto; padding: 4px 12px;" onclick="App.addSubtask('${task.id}'); App.editTask('${task.id}');">[+]</button>
+                </div>
             </div>
             
             <div class="form-group">
@@ -1558,15 +2008,27 @@ class TaskSys {
         
         this.selectedPriority = task.priority;
         this.selectedXP = task.xp;
+        this.selectedTags = [...(task.tags || [])];
     }
     
     async updateTask(id) {
         const task = await this.dbGet('tasks', id);
         if (!task) return;
         
+        const deadlineTime = document.getElementById('editDeadline').value;
+        let deadline = null;
+        if (deadlineTime) {
+            deadline = task.date + 'T' + deadlineTime;
+        }
+        
         task.text = document.getElementById('editInput').value.trim();
         task.priority = this.selectedPriority;
         task.xp = this.selectedXP;
+        task.tags = [...this.selectedTags];
+        task.deadline = deadline;
+        // Reset notification flags if deadline changed
+        task.notified15 = false;
+        task.notifiedOverdue = false;
         
         await this.dbPut('tasks', task);
         this.closeModal();
@@ -1579,14 +2041,39 @@ class TaskSys {
     // ═══════════════════════════════════════════════════════════════════════
     
     async renderPlan() {
-        const planned = await this.getPlannedTasks();
+        let planned = await this.getPlannedTasks();
+        const allTags = await this.getTags();
         const tomorrow = this.getTomorrow();
         const weekEnd = this.getWeekEnd();
+        
+        // Filter by tag if selected
+        if (this.filterTag) {
+            planned = planned.filter(t => t.tags && t.tags.includes(this.filterTag));
+        }
         
         // Group tasks
         const tomorrowTasks = planned.filter(t => t.date === tomorrow);
         const weekTasks = planned.filter(t => t.date > tomorrow && t.date <= weekEnd);
         const laterTasks = planned.filter(t => t.date > weekEnd);
+        
+        // Tag filters
+        const tagFiltersHTML = allTags.length > 0 ? `
+            <div class="dos-box" style="padding: 8px; margin-bottom: 8px;">
+                <div style="font-size: 5px; color: var(--green-dim); margin-bottom: 6px;">FILTER BY TAG:</div>
+                <div class="tags-row">
+                    <span class="tag ${!this.filterTag ? 'selected' : ''}" 
+                          style="border-color: var(--green); color: ${!this.filterTag ? 'var(--bg)' : 'var(--green)'}; background: ${!this.filterTag ? 'var(--green)' : 'transparent'};"
+                          onclick="App.setTagFilter(null)">ALL</span>
+                    ${allTags.map(t => `
+                        <span class="tag ${this.filterTag === t.id ? 'selected' : ''}" 
+                              style="border-color: ${t.color}; color: ${this.filterTag === t.id ? 'var(--bg)' : t.color}; background: ${this.filterTag === t.id ? t.color : 'transparent'};"
+                              onclick="App.setTagFilter('${t.id}')">#${t.name}</span>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
+        
+        const filterLabel = this.filterTag ? ` (FILTERED)` : '';
         
         this.dom.content.innerHTML = `
             <div class="stats-row">
@@ -1604,8 +2091,10 @@ class TaskSys {
                 </div>
             </div>
             
+            ${tagFiltersHTML}
+            
             <div class="dos-box">
-                <div class="dos-box-title">╔══ PLANNED TASKS ══╗</div>
+                <div class="dos-box-title">╔══ PLANNED TASKS${filterLabel} ══╗</div>
                 <div class="dos-box-content">
                     <div class="add-row">
                         <span style="font-size: 6px; color: var(--green-dim);">DIR C:\\PLAN\\*.*</span>
@@ -1621,7 +2110,7 @@ class TaskSys {
     ║   SCHEDULE AHEAD! ║
     ╚═══════════════════╝
                             </div>
-                            <div>PLAN YOUR FUTURE</div>
+                            <div>${this.filterTag ? 'NO PLANS WITH THIS TAG' : 'PLAN YOUR FUTURE'}</div>
                         </div>
                     ` : `
                         ${tomorrowTasks.length > 0 ? `
@@ -1629,7 +2118,7 @@ class TaskSys {
                                 ► TOMORROW (${this.formatDate(tomorrow)})
                             </div>
                             <div class="task-list">
-                                ${tomorrowTasks.map(t => this.planTaskHTML(t)).join('')}
+                                ${tomorrowTasks.map(t => this.planTaskHTML(t, allTags)).join('')}
                             </div>
                         ` : ''}
                         
@@ -1638,7 +2127,7 @@ class TaskSys {
                                 ► THIS WEEK
                             </div>
                             <div class="task-list">
-                                ${weekTasks.map(t => this.planTaskHTML(t)).join('')}
+                                ${weekTasks.map(t => this.planTaskHTML(t, allTags)).join('')}
                             </div>
                         ` : ''}
                         
@@ -1647,7 +2136,7 @@ class TaskSys {
                                 ► LATER
                             </div>
                             <div class="task-list">
-                                ${laterTasks.map(t => this.planTaskHTML(t)).join('')}
+                                ${laterTasks.map(t => this.planTaskHTML(t, allTags)).join('')}
                             </div>
                         ` : ''}
                         
@@ -1662,19 +2151,38 @@ class TaskSys {
         this.setStatus('READY', 'PLANNED: ' + planned.length);
     }
     
-    planTaskHTML(t) {
+    planTaskHTML(t, allTags) {
         const priorityChar = t.priority === 'high' ? '!' : t.priority === 'medium' ? '*' : '-';
         const daysUntil = this.daysUntil(t.date);
         const dateLabel = daysUntil === 1 ? 'TOMORROW' : 
                          daysUntil <= 7 ? this.formatDate(t.date) : 
                          t.date;
+        
+        // Tags
+        let tagsHTML = '';
+        if (t.tags && t.tags.length > 0 && allTags) {
+            tagsHTML = t.tags.map(tagId => {
+                const tag = allTags.find(tg => tg.id === tagId);
+                return tag ? `<span class="tag-inline" style="color: ${tag.color};">#${tag.name}</span>` : '';
+            }).join('');
+        }
+        
+        // Subtasks progress
+        let subtasksHTML = '';
+        if (t.subtasks && t.subtasks.length > 0) {
+            const done = t.subtasks.filter(s => s.done).length;
+            const total = t.subtasks.length;
+            subtasksHTML = `<span style="color: var(--cyan);">[${done}/${total}]</span>`;
+        }
+        
         return `
             <div class="task-item">
                 <div class="task-priority ${t.priority}">${priorityChar}</div>
                 <div class="task-content" onclick="App.editPlanTask('${t.id}')">
-                    <div class="task-text">${this.esc(t.text)}</div>
+                    <div class="task-text">${this.esc(t.text)}${tagsHTML}</div>
                     <div class="task-meta">
                         <span>+${t.xp}XP</span>
+                        ${subtasksHTML}
                         <span style="color: var(--cyan);">${dateLabel}</span>
                     </div>
                 </div>
@@ -1717,8 +2225,10 @@ class TaskSys {
         return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
     }
     
-    addPlanTask() {
+    async addPlanTask() {
         const tomorrow = this.getTomorrow();
+        const tagsHTML = await this.renderTagSelector([]);
+        
         this.showModal('SCHEDULE TASK', `
             <div class="form-group">
                 <label class="form-label">DESCRIPTION:</label>
@@ -1728,6 +2238,11 @@ class TaskSys {
             <div class="form-group">
                 <label class="form-label">DATE:</label>
                 <input type="date" class="input" id="planDate" value="${tomorrow}" min="${tomorrow}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">TAGS:</label>
+                <div class="tags-row" id="tagsSelector">${tagsHTML}</div>
             </div>
             
             <div class="form-group">
@@ -1754,6 +2269,7 @@ class TaskSys {
         
         this.selectedPriority = 'medium';
         this.selectedXP = 10;
+        this.selectedTags = [];
     }
     
     async savePlanTask() {
@@ -1767,7 +2283,9 @@ class TaskSys {
             date: date,
             priority: this.selectedPriority,
             xp: this.selectedXP,
-            done: false
+            done: false,
+            tags: [...this.selectedTags],
+            subtasks: []
         };
         
         await this.dbPut('tasks', task);
@@ -1780,6 +2298,18 @@ class TaskSys {
         const task = await this.dbGet('tasks', id);
         if (!task) return;
         
+        const tagsHTML = await this.renderTagSelector(task.tags || []);
+        const subtasks = task.subtasks || [];
+        const subtasksListHTML = subtasks.map((s, i) => `
+            <div class="subtask-item">
+                <button class="subtask-checkbox" onclick="App.toggleSubtask('${task.id}', ${i}); App.editPlanTask('${task.id}');">
+                    ${s.done ? 'X' : ' '}
+                </button>
+                <span class="subtask-text ${s.done ? 'done' : ''}">${this.esc(s.text)}</span>
+                <span class="subtask-del" onclick="App.delSubtask('${task.id}', ${i}); App.editPlanTask('${task.id}');">[X]</span>
+            </div>
+        `).join('');
+        
         this.showModal('EDIT SCHEDULED TASK', `
             <div class="form-group">
                 <label class="form-label">DESCRIPTION:</label>
@@ -1789,6 +2319,24 @@ class TaskSys {
             <div class="form-group">
                 <label class="form-label">DATE:</label>
                 <input type="date" class="input" id="editDate" value="${task.date}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">TAGS:</label>
+                <div class="tags-row" id="tagsSelector">${tagsHTML}</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">SUBTASKS:</label>
+                ${subtasks.length > 0 ? `
+                    <div class="subtasks-list" style="border: none; padding: 0;">
+                        ${subtasksListHTML}
+                    </div>
+                ` : '<div style="font-size: 6px; color: var(--green-dim);">NO SUBTASKS</div>'}
+                <div class="add-subtask-row">
+                    <input type="text" class="input" id="subtaskInput-${task.id}" placeholder="ADD SUBTASK...">
+                    <button class="btn-submit" style="width: auto; padding: 4px 12px;" onclick="App.addSubtask('${task.id}'); App.editPlanTask('${task.id}');">[+]</button>
+                </div>
             </div>
             
             <div class="form-group">
@@ -1815,6 +2363,7 @@ class TaskSys {
         
         this.selectedPriority = task.priority;
         this.selectedXP = task.xp;
+        this.selectedTags = [...(task.tags || [])];
     }
     
     async updatePlanTask(id) {
@@ -1825,6 +2374,7 @@ class TaskSys {
         task.date = document.getElementById('editDate').value;
         task.priority = this.selectedPriority;
         task.xp = this.selectedXP;
+        task.tags = [...this.selectedTags];
         
         await this.dbPut('tasks', task);
         this.closeModal();
@@ -1840,10 +2390,23 @@ class TaskSys {
         const all = await this.dbAll('tasks');
         const done = all.filter(t => t.done);
         const totalXP = (this.user.level - 1) * this.XP_MAX + this.user.xp;
+        const tags = await this.getTags();
+        const achStats = this.getAchievementStats();
         
         const hi = done.filter(t => t.priority === 'high').length;
         const med = done.filter(t => t.priority === 'medium').length;
         const lo = done.filter(t => t.priority === 'low').length;
+        
+        // Achievements grid
+        const achievementsHTML = this.ACHIEVEMENTS.map(ach => {
+            const unlocked = this.user.achievements && this.user.achievements.includes(ach.id);
+            return `
+                <div class="achievement-card ${unlocked ? 'unlocked' : 'locked'}">
+                    <div class="achievement-card-icon">${ach.icon}</div>
+                    <div class="achievement-card-name">${ach.name}</div>
+                </div>
+            `;
+        }).join('');
         
         this.dom.content.innerHTML = `
             <div class="dos-box">
@@ -1869,24 +2432,37 @@ class TaskSys {
                             <div class="stat-label">COMPLETED</div>
                         </div>
                         <div class="stat-box">
+                            <div class="stat-value">${this.user.bossWins || 0}</div>
+                            <div class="stat-label">BOSS WINS</div>
+                        </div>
+                        <div class="stat-box">
                             <div class="stat-value">${all.length ? Math.round((done.length / all.length) * 100) : 0}%</div>
                             <div class="stat-label">RATE</div>
                         </div>
                     </div>
-                    <div class="stats-row" style="margin-top: 8px;">
-                        <div class="stat-box">
-                            <div class="stat-value" style="color: var(--red);">${hi}</div>
-                            <div class="stat-label">! HIGH</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value" style="color: var(--amber);">${med}</div>
-                            <div class="stat-label">* MED</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value" style="color: var(--green);">${lo}</div>
-                            <div class="stat-label">- LOW</div>
-                        </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title" style="color: var(--amber);">╔══ ★ ACHIEVEMENTS ══╗</div>
+                <div class="dos-box-content">
+                    <div style="font-size: 6px; color: var(--amber); margin-bottom: 8px;">
+                        UNLOCKED: ${achStats.unlocked}/${achStats.total} (${achStats.percent}%)
                     </div>
+                    <div class="achievements-grid">
+                        ${achievementsHTML}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ TAGS ══╗</div>
+                <div class="dos-box-content">
+                    <div class="tags-row" style="margin-bottom: 8px;">
+                        ${tags.length === 0 ? '<span style="font-size: 6px; color: var(--green-dim);">NO TAGS YET</span>' :
+                        tags.map(t => `<span class="tag" style="border-color: ${t.color}; color: ${t.color};">#${t.name}</span>`).join('')}
+                    </div>
+                    <button class="btn-submit" style="font-size: 6px; padding: 6px;" onclick="App.showTagManager()">[+] MANAGE TAGS</button>
                 </div>
             </div>
             
@@ -1915,7 +2491,7 @@ class TaskSys {
             <div class="dos-box">
                 <div class="dos-box-title">╔══ ABOUT ══╗</div>
                 <div class="dos-box-content" style="font-size: 6px; color: var(--green-dim);">
-                    TASK.SYS VERSION 1.0<br>
+                    TASK.SYS VERSION 1.1<br>
                     COPYRIGHT (C) 2025<br>
                     <br>
                     ALL RIGHTS RESERVED.<br>
@@ -1927,6 +2503,247 @@ class TaskSys {
         `;
         
         this.setStatus('SYSTEM', 'XP: ' + totalXP);
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STATS / ANALYTICS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async renderStats() {
+        const tasks = await this.dbAll('tasks');
+        const doneTasks = tasks.filter(t => t.done);
+        
+        // Calculate analytics
+        const heatmap = this.calcHeatmap(doneTasks);
+        const weeklyXP = this.calcWeeklyXP(doneTasks);
+        const bestTime = this.calcBestTime(doneTasks);
+        const monthlyXP = this.calcMonthlyXP(doneTasks);
+        
+        this.dom.content.innerHTML = `
+            <div class="dos-box">
+                <div class="dos-box-title" style="color: var(--cyan);">╔══ 📊 WEEKLY HEATMAP ══╗</div>
+                <div class="dos-box-content">
+                    <div style="font-size: 6px; color: var(--green-dim); margin-bottom: 8px;">
+                        TASKS COMPLETED BY DAY OF WEEK
+                    </div>
+                    <pre style="font-family: 'Fira Code', monospace; font-size: 7px; line-height: 1.6; color: var(--green);">${heatmap.ascii}</pre>
+                    <div style="font-size: 6px; color: var(--green-dim); margin-top: 8px;">
+                        MOST ACTIVE: <span style="color: var(--amber);">${heatmap.bestDay}</span> (${heatmap.bestCount} TASKS)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title" style="color: var(--amber);">╔══ 📈 LAST 7 DAYS ══╗</div>
+                <div class="dos-box-content">
+                    <pre style="font-family: 'Fira Code', monospace; font-size: 7px; line-height: 1.6; color: var(--green);">${weeklyXP.ascii}</pre>
+                    <div style="font-size: 6px; color: var(--green-dim); margin-top: 8px;">
+                        TOTAL: <span style="color: var(--amber);">${weeklyXP.total} XP</span> | AVG: <span style="color: var(--cyan);">${weeklyXP.avg} XP/DAY</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title" style="color: var(--magenta);">╔══ 📉 LAST 30 DAYS ══╗</div>
+                <div class="dos-box-content">
+                    <pre style="font-family: 'Fira Code', monospace; font-size: 9px; line-height: 1.4; color: var(--green); letter-spacing: 1px;">${monthlyXP.ascii}</pre>
+                    <div style="font-size: 6px; color: var(--green-dim); margin-top: 8px;">
+                        TOTAL: <span style="color: var(--amber);">${monthlyXP.total} XP</span> | AVG: <span style="color: var(--cyan);">${monthlyXP.avg} XP/DAY</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title" style="color: var(--green);">╔══ ⏰ BEST TIME ══╗</div>
+                <div class="dos-box-content">
+                    <div style="font-size: 6px; color: var(--green-dim); margin-bottom: 8px;">
+                        YOUR PRODUCTIVITY BY HOUR
+                    </div>
+                    <pre style="font-family: 'Fira Code', monospace; font-size: 7px; line-height: 1.6; color: var(--green);">${bestTime.ascii}</pre>
+                    <div style="font-size: 7px; color: var(--green-dim); margin-top: 8px;">
+                        PEAK HOURS: <span style="color: var(--amber);">${bestTime.peakHours}</span>
+                    </div>
+                    <div style="font-size: 6px; color: var(--cyan); margin-top: 4px;">
+                        ${bestTime.recommendation}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dos-box">
+                <div class="dos-box-title">╔══ SUMMARY ══╗</div>
+                <div class="dos-box-content">
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-value">${doneTasks.length}</div>
+                            <div class="stat-label">COMPLETED</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${tasks.length - doneTasks.length}</div>
+                            <div class="stat-label">PENDING</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${tasks.length ? Math.round((doneTasks.length / tasks.length) * 100) : 0}%</div>
+                            <div class="stat-label">RATE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.setStatus('ANALYTICS', 'DATA LOADED');
+    }
+    
+    calcHeatmap(tasks) {
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const counts = [0, 0, 0, 0, 0, 0, 0];
+        
+        tasks.forEach(t => {
+            const d = new Date(t.date);
+            counts[d.getDay()]++;
+        });
+        
+        const max = Math.max(...counts, 1);
+        let bestDay = 'N/A';
+        let bestCount = 0;
+        
+        let ascii = '';
+        days.forEach((day, i) => {
+            const count = counts[i];
+            const barLen = Math.round((count / max) * 30);
+            const bar = '█'.repeat(barLen) + '░'.repeat(30 - barLen);
+            ascii += `${day} [${bar}] ${count}\n`;
+            
+            if (count > bestCount) {
+                bestCount = count;
+                bestDay = day;
+            }
+        });
+        
+        return { ascii: ascii.trim(), bestDay, bestCount };
+    }
+    
+    calcWeeklyXP(tasks) {
+        const data = [];
+        
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const dayName = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][d.getDay()];
+            
+            const dayTasks = tasks.filter(t => t.date === dateStr);
+            const xp = dayTasks.reduce((sum, t) => sum + (t.xp || 0), 0);
+            
+            data.push({ day: dayName, xp });
+        }
+        
+        const max = Math.max(...data.map(d => d.xp), 1);
+        const total = data.reduce((a, b) => a + b.xp, 0);
+        const avg = Math.round(total / 7);
+        
+        // Build horizontal bar chart - wider bars
+        let ascii = '';
+        data.forEach(d => {
+            const barLen = Math.round((d.xp / max) * 28);
+            const bar = '█'.repeat(barLen) + '░'.repeat(28 - barLen);
+            ascii += `${d.day} [${bar}] ${d.xp}\n`;
+        });
+        
+        return { ascii: ascii.trim(), total, avg };
+    }
+    
+    calcMonthlyXP(tasks) {
+        const xpByDay = [];
+        
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            const dayTasks = tasks.filter(t => t.date === dateStr);
+            const xp = dayTasks.reduce((sum, t) => sum + (t.xp || 0), 0);
+            xpByDay.push(xp);
+        }
+        
+        const max = Math.max(...xpByDay, 1);
+        const total = xpByDay.reduce((a, b) => a + b, 0);
+        const avg = Math.round(total / 30);
+        
+        // Sparkline style - use · for zero instead of space
+        const chars = ['·', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+        let ascii = xpByDay.map(xp => {
+            const idx = Math.round((xp / max) * 8);
+            return chars[idx];
+        }).join('');
+        
+        return { ascii, total, avg };
+    }
+    
+    calcBestTime(tasks) {
+        const hours = new Array(24).fill(0);
+        
+        tasks.forEach(t => {
+            if (t.created) {
+                const h = new Date(t.created).getHours();
+                hours[h]++;
+            }
+        });
+        
+        const max = Math.max(...hours, 1);
+        
+        // Find peak hours
+        const peaks = [];
+        hours.forEach((count, h) => {
+            if (count >= max * 0.7 && count > 0) {
+                peaks.push(h);
+            }
+        });
+        
+        // Build hourly chart (compact - 6h blocks)
+        const blocks = [
+            { label: 'NIGHT', hours: [0, 1, 2, 3, 4, 5] },
+            { label: 'MORNING', hours: [6, 7, 8, 9, 10, 11] },
+            { label: 'AFTERNOON', hours: [12, 13, 14, 15, 16, 17] },
+            { label: 'EVENING', hours: [18, 19, 20, 21, 22, 23] }
+        ];
+        
+        let ascii = '';
+        blocks.forEach(block => {
+            const count = block.hours.reduce((sum, h) => sum + hours[h], 0);
+            const barLen = Math.round((count / (max * 6)) * 26);
+            const bar = '█'.repeat(Math.min(barLen, 26)) + '░'.repeat(Math.max(26 - barLen, 0));
+            ascii += `${block.label.padEnd(9)} [${bar}] ${count}\n`;
+        });
+        
+        // Detailed hour breakdown - 24h grid
+        ascii += '\n';
+        const chars = ['·', '▂', '▄', '▆', '█'];
+        for (let h = 0; h < 24; h++) {
+            const count = hours[h];
+            const level = count === 0 ? 0 : Math.min(Math.ceil((count / max) * 4), 4);
+            ascii += chars[level];
+        }
+        ascii += '\n0   4   8  12  16  20 23';
+        
+        const peakHours = peaks.length > 0 
+            ? peaks.map(h => `${String(h).padStart(2, '0')}:00`).join(', ')
+            : 'NOT ENOUGH DATA';
+        
+        let recommendation = '';
+        if (peaks.length > 0) {
+            const avgPeak = Math.round(peaks.reduce((a, b) => a + b, 0) / peaks.length);
+            if (avgPeak < 12) {
+                recommendation = '☀ YOU ARE A MORNING PERSON! TACKLE HARD TASKS EARLY.';
+            } else if (avgPeak < 18) {
+                recommendation = '🌤 AFTERNOON IS YOUR PRIME TIME. PLAN KEY WORK POST-LUNCH.';
+            } else {
+                recommendation = '🌙 NIGHT OWL DETECTED! YOUR BRAIN PEAKS IN THE EVENING.';
+            }
+        } else {
+            recommendation = '📊 COMPLETE MORE TASKS TO SEE YOUR PATTERNS!';
+        }
+        
+        return { ascii: ascii.trim(), peakHours, recommendation };
     }
     
     async exportData() {
@@ -1999,11 +2816,20 @@ class TaskSys {
     
     async confirmReset() {
         this.setStatus('RESETTING<span class="loading-dots"></span>');
-        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: this.today() };
+        this.user = { 
+            level: 1, 
+            xp: 0, 
+            total: 0, 
+            streak: 0, 
+            lastDate: this.today(),
+            achievements: [],
+            bossWins: 0
+        };
         await this.saveUser();
         this.updateXP();
         this.closeModal();
         this.toast('PROGRESS RESET TO ZERO');
+        this.render();
         this.setStatus('READY');
     }
     
@@ -2027,8 +2853,18 @@ class TaskSys {
     async confirmClearAll() {
         this.setStatus('FORMATTING<span class="loading-dots"></span>');
         await this.dbClear('tasks');
-        this.user = { level: 1, xp: 0, total: 0, streak: 0, lastDate: this.today() };
+        await this.dbClear('tags');
+        this.user = { 
+            level: 1, 
+            xp: 0, 
+            total: 0, 
+            streak: 0, 
+            lastDate: this.today(),
+            achievements: [],
+            bossWins: 0
+        };
         await this.saveUser();
+        this.filterTag = null;
         this.updateXP();
         this.closeModal();
         this.render();
@@ -2214,10 +3050,12 @@ class TaskSys {
         
         const bonusXP = task.xp * 2;
         this.user.total++;
+        this.user.bossWins = (this.user.bossWins || 0) + 1;
         await this.addXP(bonusXP);
         
         this.dom.bossOverlay.classList.remove('active');
         this.toast('BOSS DEFEATED! +' + bonusXP + ' XP (2X BONUS!)');
+        await this.checkAchievements();
         this.render();
         this.setStatus('VICTORY!', 'BOSS DEFEATED');
     }
@@ -2271,6 +3109,259 @@ class TaskSys {
         document.querySelectorAll('[data-time]').forEach(b => {
             b.classList.toggle('active', parseInt(b.dataset.time) === mins);
         });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACHIEVEMENTS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async checkAchievements() {
+        const newAchievements = [];
+        
+        for (const ach of this.ACHIEVEMENTS) {
+            if (!this.user.achievements.includes(ach.id) && ach.check(this.user)) {
+                this.user.achievements.push(ach.id);
+                newAchievements.push(ach);
+            }
+        }
+        
+        await this.saveUser();
+        
+        // Show achievements one by one
+        for (const ach of newAchievements) {
+            await this.showAchievement(ach);
+        }
+    }
+    
+    showAchievement(ach) {
+        return new Promise(resolve => {
+            this.dom.achievementIcon.textContent = ach.icon;
+            this.dom.achievementName.textContent = ach.name;
+            this.dom.achievementDesc.textContent = ach.desc;
+            this.dom.achievementOverlay.classList.add('active');
+            
+            this.playAchievementSound();
+            
+            const handler = () => {
+                document.removeEventListener('click', handler);
+                document.removeEventListener('keydown', handler);
+                this.closeAchievement();
+                resolve();
+            };
+            
+            setTimeout(() => {
+                document.addEventListener('click', handler);
+                document.addEventListener('keydown', handler);
+            }, 500);
+        });
+    }
+    
+    closeAchievement() {
+        this.dom.achievementOverlay.classList.remove('active');
+    }
+    
+    playAchievementSound() {
+        const melody = [
+            { freq: 659, delay: 0 },      // E5
+            { freq: 784, delay: 100 },    // G5
+            { freq: 1047, delay: 200 },   // C6
+            { freq: 1319, delay: 300 },   // E6
+            { freq: 1568, delay: 400 },   // G6
+        ];
+        
+        melody.forEach(note => {
+            setTimeout(() => this.playNote(note.freq, 0.2, 'square', 0.15), note.delay);
+        });
+    }
+    
+    getAchievementStats() {
+        const unlocked = this.user.achievements.length;
+        const total = this.ACHIEVEMENTS.length;
+        return { unlocked, total, percent: Math.round((unlocked / total) * 100) };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // TAGS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async getTags() {
+        return await this.dbAll('tags');
+    }
+    
+    async saveTag(name, color) {
+        const tag = {
+            id: Date.now().toString(),
+            name: name.toUpperCase(),
+            color: color || '#00ffff'
+        };
+        await this.dbPut('tags', tag);
+        return tag;
+    }
+    
+    async deleteTag(id) {
+        await this.dbDel('tags', id);
+        // Remove tag from all tasks
+        const tasks = await this.dbAll('tasks');
+        for (const task of tasks) {
+            if (task.tags && task.tags.includes(id)) {
+                task.tags = task.tags.filter(t => t !== id);
+                await this.dbPut('tasks', task);
+            }
+        }
+    }
+    
+    async showTagManager() {
+        const tags = await this.getTags();
+        
+        this.showModal('MANAGE TAGS', `
+            <div class="form-group">
+                <label class="form-label">YOUR TAGS:</label>
+                <div class="tags-list" style="margin-bottom: 12px;">
+                    ${tags.length === 0 ? '<div style="font-size: 6px; color: var(--green-dim);">NO TAGS YET</div>' : 
+                    tags.map(t => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--green-dark);">
+                            <span class="tag" style="border-color: ${t.color}; color: ${t.color};">#${t.name}</span>
+                            <button onclick="App.confirmDeleteTag('${t.id}')" style="font-size: 6px; color: var(--red); background: none; border: none; cursor: pointer;">[DEL]</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">ADD NEW TAG:</label>
+                <div class="add-subtask-row">
+                    <input type="text" class="input" id="newTagName" placeholder="TAG NAME..." maxlength="15">
+                    <button class="btn-submit" style="width: auto; padding: 4px 12px;" onclick="App.createTag()">[+]</button>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="App.closeModal()">[ESC] CLOSE</button>
+        `);
+    }
+    
+    async createTag() {
+        const name = document.getElementById('newTagName').value.trim();
+        if (!name) return;
+        
+        const colors = ['#00ffff', '#ff00ff', '#ffff00', '#ff6600', '#00ff00'];
+        const tags = await this.getTags();
+        const color = colors[tags.length % colors.length];
+        
+        await this.saveTag(name, color);
+        this.toast('TAG CREATED: #' + name.toUpperCase());
+        this.showTagManager();
+    }
+    
+    async confirmDeleteTag(id) {
+        await this.deleteTag(id);
+        this.toast('TAG DELETED');
+        this.showTagManager();
+    }
+    
+    async renderTagSelector(selectedTags = []) {
+        const tags = await this.getTags();
+        if (tags.length === 0) return '<div style="font-size: 6px; color: var(--green-dim);">NO TAGS. <a href="#" onclick="App.closeModal(); App.showTagManager(); return false;" style="color: var(--cyan);">CREATE SOME</a></div>';
+        
+        return tags.map(t => `
+            <span class="tag ${selectedTags.includes(t.id) ? 'selected' : ''}" 
+                  style="border-color: ${t.color}; color: ${selectedTags.includes(t.id) ? 'var(--bg)' : t.color}; background: ${selectedTags.includes(t.id) ? t.color : 'transparent'};"
+                  onclick="App.toggleTagSelection('${t.id}')">#${t.name}</span>
+        `).join('');
+    }
+    
+    toggleTagSelection(tagId) {
+        if (this.selectedTags.includes(tagId)) {
+            this.selectedTags = this.selectedTags.filter(t => t !== tagId);
+        } else {
+            this.selectedTags.push(tagId);
+        }
+        
+        // Update visual
+        document.querySelectorAll('.tag[onclick*="toggleTagSelection"]').forEach(async el => {
+            const id = el.getAttribute('onclick').match(/'([^']+)'/)[1];
+            const tags = await this.getTags();
+            const tag = tags.find(t => t.id === id);
+            if (!tag) return;
+            
+            if (this.selectedTags.includes(id)) {
+                el.classList.add('selected');
+                el.style.background = tag.color;
+                el.style.color = 'var(--bg)';
+            } else {
+                el.classList.remove('selected');
+                el.style.background = 'transparent';
+                el.style.color = tag.color;
+            }
+        });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // SUBTASKS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async toggleSubtask(taskId, subtaskIndex) {
+        const task = await this.dbGet('tasks', taskId);
+        if (!task || !task.subtasks) return;
+        
+        task.subtasks[subtaskIndex].done = !task.subtasks[subtaskIndex].done;
+        await this.dbPut('tasks', task);
+        
+        // Check if all subtasks done
+        const allDone = task.subtasks.every(s => s.done);
+        if (allDone && !task.done) {
+            this.toast('ALL SUBTASKS COMPLETE! MARK TASK AS DONE?');
+        }
+        
+        this.render();
+    }
+    
+    async addSubtask(taskId) {
+        const input = document.getElementById('subtaskInput-' + taskId);
+        if (!input) return;
+        
+        const text = input.value.trim();
+        if (!text) return;
+        
+        const task = await this.dbGet('tasks', taskId);
+        if (!task) return;
+        
+        if (!task.subtasks) task.subtasks = [];
+        task.subtasks.push({ text, done: false });
+        
+        await this.dbPut('tasks', task);
+        input.value = '';
+        this.render();
+    }
+    
+    async delSubtask(taskId, subtaskIndex) {
+        const task = await this.dbGet('tasks', taskId);
+        if (!task || !task.subtasks) return;
+        
+        task.subtasks.splice(subtaskIndex, 1);
+        await this.dbPut('tasks', task);
+        this.render();
+    }
+    
+    renderSubtasks(task) {
+        if (!task.subtasks || task.subtasks.length === 0) return '';
+        
+        const done = task.subtasks.filter(s => s.done).length;
+        const total = task.subtasks.length;
+        
+        return `
+            <div class="subtasks-list">
+                ${task.subtasks.map((s, i) => `
+                    <div class="subtask-item">
+                        <button class="subtask-checkbox" onclick="event.stopPropagation(); App.toggleSubtask('${task.id}', ${i})">
+                            ${s.done ? 'X' : ' '}
+                        </button>
+                        <span class="subtask-text ${s.done ? 'done' : ''}">${this.esc(s.text)}</span>
+                        <span class="subtask-del" onclick="event.stopPropagation(); App.delSubtask('${task.id}', ${i})">[X]</span>
+                    </div>
+                `).join('')}
+                <div class="subtask-progress">${done}/${total} SUBTASKS</div>
+            </div>
+        `;
     }
     
     esc(txt) {
