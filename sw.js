@@ -3,7 +3,7 @@
 // ║            Офлайн работа и кэширование для PWA                           ║
 // ╚═══════════════════════════════════════════════════════════════════════════╝
 
-const CACHE_NAME = 't3rm1n4l-v1';
+const CACHE_NAME = 'task-sys-v7';
 
 // Файлы для кэширования (офлайн работа)
 const CACHE_FILES = [
@@ -132,7 +132,7 @@ self.addEventListener('push', (event) => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('T3RM1N4L', options)
+        self.registration.showNotification('TASK.SYS', options)
     );
 });
 
