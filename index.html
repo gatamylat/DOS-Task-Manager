@@ -1205,7 +1205,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
-// TASK.SYS V1.0 - DOS-STYLE TASK MANAGER
+// TASK.SYS V1.2 - DOS-STYLE TASK MANAGER
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BOOT_LOGO = `
@@ -1290,6 +1290,15 @@ class TaskSys {
         
         // Tag filter
         this.filterTag = null;
+        
+        // Daily Quests definitions
+        this.QUESTS = [
+            { id: 'fresh_start', name: 'FRESH START', desc: 'Complete 3 tasks today', reward: 50, target: 3, type: 'tasks' },
+            { id: 'priority_one', name: 'PRIORITY ONE', desc: 'Finish a HIGH priority task', reward: 30, target: 1, type: 'high' },
+            { id: 'halfway_hero', name: 'HALFWAY HERO', desc: 'Complete 5 tasks today', reward: 60, target: 5, type: 'tasks' },
+            { id: 'debt_collector', name: 'DEBT COLLECTOR', desc: 'Clear all overdue tasks', reward: 75, target: 0, type: 'overdue' },
+            { id: 'boss_slayer_daily', name: 'BOSS SLAYER', desc: 'Win a Boss Battle', reward: 50, target: 1, type: 'boss' }
+        ];
         
         this.dom = {
             bootScreen: document.getElementById('bootScreen'),
@@ -1390,6 +1399,7 @@ class TaskSys {
         
         await this.initDB();
         await this.loadUser();
+        await this.checkHabitsStreak();
         this.updateClock();
         this.startSpinner();
         this.updateXP();
@@ -1468,7 +1478,7 @@ class TaskSys {
     
     async initDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('TaskSysDB', 2);
+            const req = indexedDB.open('TaskSysDB', 3);
             req.onerror = () => reject(req.error);
             req.onsuccess = () => { this.db = req.result; resolve(); };
             req.onupgradeneeded = (e) => {
@@ -1481,6 +1491,9 @@ class TaskSys {
                 }
                 if (!db.objectStoreNames.contains('tags')) {
                     db.createObjectStore('tags', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('habits')) {
+                    db.createObjectStore('habits', { keyPath: 'id' });
                 }
             };
         });
@@ -1546,8 +1559,15 @@ class TaskSys {
             // Initialize new fields for existing users
             if (!this.user.achievements) this.user.achievements = [];
             if (!this.user.bossWins) this.user.bossWins = 0;
+            if (!this.user.quest) this.user.quest = null;
+            if (!this.user.questHistory) this.user.questHistory = [];
+            if (!this.user.todayBossWins) this.user.todayBossWins = 0;
+            if (!this.user.todayBossDate) this.user.todayBossDate = null;
         }
         else await this.saveUser();
+        
+        // Check and assign daily quest
+        await this.checkDailyQuest();
     }
     
     async saveUser() {
@@ -1603,8 +1623,359 @@ class TaskSys {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // NAVIGATION
+    // DAILY QUESTS
     // ═══════════════════════════════════════════════════════════════════════
+    
+    async checkDailyQuest() {
+        const today = this.today();
+        const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
+        
+        // No quests on weekends
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            this.user.quest = null;
+            return;
+        }
+        
+        // Check if we already have today's quest
+        if (this.user.quest && this.user.quest.date === today) {
+            return; // Already have quest for today
+        }
+        
+        // Get week start (Monday)
+        const d = new Date();
+        const dayNum = d.getDay() || 7;
+        d.setDate(d.getDate() - dayNum + 1);
+        const weekStart = d.toISOString().split('T')[0];
+        
+        // Filter out quests used this week
+        if (!this.user.questHistory) this.user.questHistory = [];
+        const usedThisWeek = this.user.questHistory.filter(q => q.week === weekStart).map(q => q.id);
+        
+        // Get available quests
+        const available = this.QUESTS.filter(q => !usedThisWeek.includes(q.id));
+        
+        // If all used, reset (shouldn't happen with 5 quests for 5 days)
+        const pool = available.length > 0 ? available : this.QUESTS;
+        
+        // Pick random quest
+        const quest = pool[Math.floor(Math.random() * pool.length)];
+        
+        // Reset today's boss counter
+        this.user.todayBossWins = 0;
+        this.user.todayBossDate = today;
+        
+        // Assign quest
+        this.user.quest = {
+            id: quest.id,
+            date: today,
+            completed: false,
+            progress: 0
+        };
+        
+        // Add to history
+        this.user.questHistory.push({ id: quest.id, week: weekStart, date: today });
+        
+        // Keep only last 2 weeks of history
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        const cutoff = twoWeeksAgo.toISOString().split('T')[0];
+        this.user.questHistory = this.user.questHistory.filter(q => q.date >= cutoff);
+        
+        await this.saveUser();
+    }
+    
+    getQuestDef() {
+        if (!this.user.quest) return null;
+        return this.QUESTS.find(q => q.id === this.user.quest.id);
+    }
+    
+    async updateQuestProgress() {
+        if (!this.user.quest || this.user.quest.completed) return;
+        
+        const quest = this.getQuestDef();
+        if (!quest) return;
+        
+        const today = this.today();
+        const tasks = await this.dbAll('tasks');
+        const todayDone = tasks.filter(t => t.done && t.date === today);
+        const overdue = tasks.filter(t => !t.done && t.date < today);
+        
+        let progress = 0;
+        let completed = false;
+        
+        switch (quest.type) {
+            case 'tasks':
+                progress = todayDone.length;
+                completed = progress >= quest.target;
+                break;
+            case 'high':
+                progress = todayDone.filter(t => t.priority === 'high').length;
+                completed = progress >= quest.target;
+                break;
+            case 'overdue':
+                progress = overdue.length === 0 && todayDone.length > 0 ? 1 : 0;
+                completed = overdue.length === 0 && todayDone.length > 0;
+                break;
+            case 'boss':
+                // Reset if day changed
+                if (this.user.todayBossDate !== today) {
+                    this.user.todayBossWins = 0;
+                    this.user.todayBossDate = today;
+                }
+                progress = this.user.todayBossWins || 0;
+                completed = progress >= quest.target;
+                break;
+        }
+        
+        this.user.quest.progress = progress;
+        
+        if (completed && !this.user.quest.completed) {
+            this.user.quest.completed = true;
+            await this.saveUser();
+            await this.addXP(quest.reward);
+            this.showQuestComplete(quest);
+        } else {
+            await this.saveUser();
+        }
+    }
+    
+    showQuestComplete(quest) {
+        this.showModal('☎ MISSION COMPLETE', `
+            <div style="text-align: center; padding: 16px 0;">
+                <div style="font-size: 10px; color: var(--green); margin-bottom: 16px;">
+                    ╔═══════════════════════════════════╗<br>
+                    ║     TRANSMISSION RECEIVED...      ║<br>
+                    ╚═══════════════════════════════════╝
+                </div>
+                <div style="font-size: 8px; color: var(--amber); margin-bottom: 8px;">
+                    "${quest.name}"
+                </div>
+                <div style="font-size: 7px; color: var(--green-dim); margin-bottom: 16px;">
+                    ${quest.desc}
+                </div>
+                <div style="font-size: 9px; color: var(--cyan);">
+                    ★ +${quest.reward} XP EARNED ★
+                </div>
+                <div style="font-size: 6px; color: var(--green-dim); margin-top: 16px;">
+                    "You're beginning to believe..."
+                </div>
+            </div>
+            <button class="btn-submit" onclick="App.closeModal()">[ENTER] CONTINUE</button>
+        `);
+        this.playQuestSound();
+    }
+    
+    playQuestSound() {
+        if (!this.audioCtx) {
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const ctx = this.audioCtx;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.1;
+            osc.start(ctx.currentTime + i * 0.15);
+            osc.stop(ctx.currentTime + i * 0.15 + 0.15);
+        });
+    }
+    
+    showQuestModal() {
+        const quest = this.getQuestDef();
+        if (!quest) return;
+        
+        const q = this.user.quest;
+        const progressText = quest.type === 'overdue' 
+            ? (q.completed ? 'CLEARED!' : 'PENDING') 
+            : `${q.progress}/${quest.target}`;
+        const progressPct = quest.type === 'overdue'
+            ? (q.completed ? 100 : 0)
+            : Math.min(100, Math.round((q.progress / quest.target) * 100));
+        const barLen = Math.round(progressPct / 5);
+        const bar = '█'.repeat(barLen) + '░'.repeat(20 - barLen);
+        
+        this.showModal('☎ INCOMING TRANSMISSION', `
+            <div style="text-align: center; padding: 8px 0;">
+                <div style="font-size: 7px; color: var(--green-dim); margin-bottom: 12px;">
+                    "Wake up, Neo..."
+                </div>
+                <div style="font-size: 9px; color: var(--amber); margin-bottom: 8px;">
+                    MISSION: ${quest.name}
+                </div>
+                <div style="font-size: 7px; color: var(--green); margin-bottom: 16px;">
+                    ► ${quest.desc}
+                </div>
+                <div style="font-size: 8px; color: var(--cyan); margin-bottom: 4px;">
+                    PROGRESS: ${progressText}
+                </div>
+                <div style="font-family: 'Fira Code', monospace; font-size: 8px; color: var(--green);">
+                    [${bar}]
+                </div>
+                <div style="font-size: 7px; color: var(--amber); margin-top: 12px;">
+                    REWARD: +${quest.reward} XP
+                </div>
+                <div style="font-size: 6px; color: var(--green-dim); margin-top: 16px;">
+                    ${q.completed ? '"You are the One..."' : '"Follow the white rabbit..."'}
+                </div>
+            </div>
+            <button class="btn-submit" onclick="App.closeModal()">[ESC] CLOSE</button>
+        `);
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // HABITS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async getHabits() {
+        return await this.dbAll('habits');
+    }
+    
+    async toggleHabit(id) {
+        const habit = await this.dbGet('habits', id);
+        if (!habit) return;
+        
+        const today = this.today();
+        
+        if (habit.lastCompleted === today) {
+            // Undo - uncheck
+            habit.lastCompleted = null;
+            habit.streak = Math.max(0, habit.streak - 1);
+        } else {
+            // Check if streak continues or breaks
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            
+            if (habit.lastCompleted === yesterdayStr || habit.streak === 0) {
+                habit.streak++;
+            } else if (habit.lastCompleted !== today) {
+                // Streak broken, start new
+                habit.streak = 1;
+            }
+            
+            habit.lastCompleted = today;
+            
+            // Award XP
+            await this.addXP(habit.xp || 5);
+            this.toast(`+${habit.xp || 5} XP - HABIT COMPLETE!`);
+        }
+        
+        await this.dbPut('habits', habit);
+        this.render();
+    }
+    
+    async addHabit() {
+        this.showModal('NEW HABIT', `
+            <div class="form-group">
+                <label class="form-label">HABIT NAME:</label>
+                <input type="text" class="input" id="habitInput" placeholder="E.G. EXERCISE, READ...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn" data-hxp="3" onclick="App.setHabitXP(3)">+3</button>
+                    <button class="select-btn active" data-hxp="5" onclick="App.setHabitXP(5)">+5</button>
+                    <button class="select-btn" data-hxp="10" onclick="App.setHabitXP(10)">+10</button>
+                </div>
+            </div>
+            <button class="btn-submit" onclick="App.saveHabit()">[ENTER] CREATE</button>
+        `);
+        this.selectedHabitXP = 5;
+    }
+    
+    setHabitXP(xp) {
+        this.selectedHabitXP = xp;
+        document.querySelectorAll('[data-hxp]').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.hxp) === xp);
+        });
+    }
+    
+    async saveHabit() {
+        const text = document.getElementById('habitInput').value.trim();
+        if (!text) return;
+        
+        const habit = {
+            id: 'habit_' + Date.now(),
+            text: text.toUpperCase(),
+            streak: 0,
+            lastCompleted: null,
+            xp: this.selectedHabitXP || 5
+        };
+        
+        await this.dbPut('habits', habit);
+        this.closeModal();
+        this.toast('HABIT CREATED!');
+        this.render();
+    }
+    
+    async editHabit(id) {
+        const habit = await this.dbGet('habits', id);
+        if (!habit) return;
+        
+        this.showModal('EDIT HABIT', `
+            <div class="form-group">
+                <label class="form-label">HABIT NAME:</label>
+                <input type="text" class="input" id="editHabitInput" value="${this.esc(habit.text)}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">XP REWARD:</label>
+                <div class="select-row">
+                    <button class="select-btn ${habit.xp === 3 ? 'active' : ''}" data-hxp="3" onclick="App.setHabitXP(3)">+3</button>
+                    <button class="select-btn ${habit.xp === 5 ? 'active' : ''}" data-hxp="5" onclick="App.setHabitXP(5)">+5</button>
+                    <button class="select-btn ${habit.xp === 10 ? 'active' : ''}" data-hxp="10" onclick="App.setHabitXP(10)">+10</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">STREAK: 🔥 ${habit.streak} DAYS</label>
+            </div>
+            <div class="select-row">
+                <button class="btn-submit" style="border-color: var(--red); color: var(--red);" onclick="App.deleteHabit('${id}')">[DEL]</button>
+                <button class="btn-submit" onclick="App.updateHabit('${id}')">[SAVE]</button>
+            </div>
+        `);
+        this.selectedHabitXP = habit.xp || 5;
+    }
+    
+    async updateHabit(id) {
+        const habit = await this.dbGet('habits', id);
+        if (!habit) return;
+        
+        habit.text = document.getElementById('editHabitInput').value.trim().toUpperCase();
+        habit.xp = this.selectedHabitXP || 5;
+        
+        await this.dbPut('habits', habit);
+        this.closeModal();
+        this.toast('HABIT UPDATED!');
+        this.render();
+    }
+    
+    async deleteHabit(id) {
+        await this.dbDel('habits', id);
+        this.closeModal();
+        this.toast('HABIT DELETED');
+        this.render();
+    }
+    
+    async checkHabitsStreak() {
+        // Called on app start to check/break streaks
+        const habits = await this.getHabits();
+        const today = this.today();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        for (const habit of habits) {
+            // If last completed is before yesterday, streak is broken
+            if (habit.lastCompleted && habit.lastCompleted < yesterdayStr) {
+                habit.streak = 0;
+                await this.dbPut('habits', habit);
+            }
+        }
+    }
     
     go(tab) {
         if (this.currentTab !== tab) {
@@ -1633,6 +2004,7 @@ class TaskSys {
         let tasks = await this.getTodayTasks();
         let overdue = await this.getOverdueTasks();
         const allTags = await this.getTags();
+        const habits = await this.getHabits();
         
         // Filter by tag if selected
         if (this.filterTag) {
@@ -1645,6 +2017,54 @@ class TaskSys {
         
         const overdueTasksHTML = await Promise.all(overdue.map(t => this.taskHTML(t, true, allTags)));
         const todayTasksHTML = await Promise.all(tasks.map(t => this.taskHTML(t, false, allTags)));
+        
+        // Quest banner
+        const quest = this.getQuestDef();
+        const today = this.today();
+        const questHTML = quest && this.user.quest ? `
+            <div class="dos-box" style="border-color: var(--amber); cursor: pointer;" onclick="App.showQuestModal()">
+                <div class="dos-box-title" style="background: var(--amber); color: var(--bg);">
+                    ╔══ ☎ MISSION: ${quest.name} ══ ${this.user.quest.completed ? '✓ DONE' : `[${this.user.quest.progress}/${quest.target}]`} ══╗
+                </div>
+            </div>
+        ` : (new Date().getDay() === 0 || new Date().getDay() === 6) ? '' : '';
+        
+        // Habits block
+        const habitsHTML = habits.length > 0 ? `
+            <div class="dos-box" style="border-color: var(--cyan);">
+                <div class="dos-box-title" style="background: var(--cyan); color: var(--bg);">╔══ 🔁 DAILY HABITS ══╗</div>
+                <div class="dos-box-content">
+                    ${habits.map(h => {
+                        const isDone = h.lastCompleted === today;
+                        return `
+                            <div class="habit-item" style="display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--green-dark);">
+                                <button class="habit-check" onclick="App.toggleHabit('${h.id}')" style="
+                                    width: 20px; height: 20px; 
+                                    background: ${isDone ? 'var(--cyan)' : 'transparent'}; 
+                                    border: 2px solid var(--cyan); 
+                                    color: var(--bg); 
+                                    cursor: pointer;
+                                    font-size: 10px;
+                                ">${isDone ? '✓' : ''}</button>
+                                <span style="flex: 1; color: ${isDone ? 'var(--green-dim)' : 'var(--green)'}; text-decoration: ${isDone ? 'line-through' : 'none'}; cursor: pointer;" onclick="App.editHabit('${h.id}')">${h.text}</span>
+                                <span style="color: var(--amber); font-size: 6px;">🔥${h.streak}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                    <div style="margin-top: 8px;">
+                        <button class="add-btn" onclick="App.addHabit()">[+] NEW HABIT</button>
+                    </div>
+                </div>
+            </div>
+        ` : `
+            <div class="dos-box" style="border-color: var(--cyan);">
+                <div class="dos-box-title" style="background: var(--cyan); color: var(--bg);">╔══ 🔁 DAILY HABITS ══╗</div>
+                <div class="dos-box-content">
+                    <div style="font-size: 6px; color: var(--green-dim); margin-bottom: 8px;">NO HABITS YET</div>
+                    <button class="add-btn" onclick="App.addHabit()">[+] NEW HABIT</button>
+                </div>
+            </div>
+        `;
         
         // Tag filters
         const tagFiltersHTML = allTags.length > 0 ? `
@@ -1694,6 +2114,10 @@ class TaskSys {
                     <div class="stat-label">OVERDUE</div>
                 </div>
             </div>
+            
+            ${questHTML}
+            
+            ${habitsHTML}
             
             ${tagFiltersHTML}
             
@@ -1926,6 +2350,7 @@ class TaskSys {
             await this.addXP(task.xp);
             this.toast('TASK COMPLETE! +' + task.xp + ' XP');
             await this.checkAchievements();
+            await this.updateQuestProgress();
         }
         
         this.render();
@@ -2491,7 +2916,7 @@ class TaskSys {
             <div class="dos-box">
                 <div class="dos-box-title">╔══ ABOUT ══╗</div>
                 <div class="dos-box-content" style="font-size: 6px; color: var(--green-dim);">
-                    TASK.SYS VERSION 1.1<br>
+                    TASK.SYS VERSION 1.2<br>
                     COPYRIGHT (C) 2025<br>
                     <br>
                     ALL RIGHTS RESERVED.<br>
@@ -3051,11 +3476,21 @@ class TaskSys {
         const bonusXP = task.xp * 2;
         this.user.total++;
         this.user.bossWins = (this.user.bossWins || 0) + 1;
+        
+        // Track today's boss wins for quest
+        const today = this.today();
+        if (this.user.todayBossDate !== today) {
+            this.user.todayBossWins = 0;
+            this.user.todayBossDate = today;
+        }
+        this.user.todayBossWins = (this.user.todayBossWins || 0) + 1;
+        
         await this.addXP(bonusXP);
         
         this.dom.bossOverlay.classList.remove('active');
         this.toast('BOSS DEFEATED! +' + bonusXP + ' XP (2X BONUS!)');
         await this.checkAchievements();
+        await this.updateQuestProgress();
         this.render();
         this.setStatus('VICTORY!', 'BOSS DEFEATED');
     }
